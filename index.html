@@ -1,105 +1,988 @@
-<!-- index.html -->
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vexel AI – Search & Summarize</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap"
-    rel="stylesheet"
-  />
+
+<meta charset="UTF-8" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Gemini Chat</title>
+
+
+
+<!-- Markdown library for nice formatting -->
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+
+
+<style>
+
+/* ----- Reset & base ----- */
+
+* {
+
+margin: 0;
+
+padding: 0;
+
+box-sizing: border-box;
+
+}
+
+
+
+body {
+
+font-family: 'Segoe UI', system-ui, sans-serif;
+
+background: #f7f9fc;
+
+display: flex;
+
+justify-content: center;
+
+align-items: center;
+
+height: 100vh;
+
+margin: 0;
+
+transition: background 0.3s;
+
+}
+
+
+
+body.dark {
+
+background: #1e1e2f;
+
+color: #eee;
+
+}
+
+
+
+/* ----- Main chat container ----- */
+
+.chat-container {
+
+width: 100%;
+
+max-width: 800px;
+
+height: 90vh;
+
+background: #ffffff;
+
+border-radius: 28px;
+
+box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+
+display: flex;
+
+flex-direction: column;
+
+overflow: hidden;
+
+transition: background 0.3s, box-shadow 0.3s;
+
+}
+
+
+
+body.dark .chat-container {
+
+background: #2a2a3e;
+
+box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+
+}
+
+
+
+/* ----- Header ----- */
+
+.header {
+
+background: linear-gradient(135deg, #1a73e8, #0d47a1);
+
+color: white;
+
+padding: 1.2rem 1.8rem;
+
+display: flex;
+
+justify-content: space-between;
+
+align-items: center;
+
+flex-shrink: 0;
+
+}
+
+
+
+.header h1 {
+
+font-size: 1.4rem;
+
+font-weight: 600;
+
+letter-spacing: 0.3px;
+
+display: flex;
+
+align-items: center;
+
+gap: 0.5rem;
+
+}
+
+
+
+.header-actions {
+
+display: flex;
+
+gap: 0.8rem;
+
+align-items: center;
+
+}
+
+
+
+.header-actions button {
+
+background: rgba(255, 255, 255, 0.15);
+
+border: none;
+
+color: white;
+
+padding: 0.4rem 0.9rem;
+
+border-radius: 20px;
+
+cursor: pointer;
+
+font-size: 0.85rem;
+
+transition: background 0.2s;
+
+backdrop-filter: blur(4px);
+
+}
+
+
+
+.header-actions button:hover {
+
+background: rgba(255, 255, 255, 0.3);
+
+}
+
+
+
+/* ----- Message area ----- */
+
+.messages {
+
+flex: 1;
+
+overflow-y: auto;
+
+padding: 1.5rem 1.8rem;
+
+display: flex;
+
+flex-direction: column;
+
+gap: 1rem;
+
+background: #fafcff;
+
+transition: background 0.3s;
+
+}
+
+
+
+body.dark .messages {
+
+background: #22223a;
+
+}
+
+
+
+.message {
+
+max-width: 80%;
+
+padding: 0.8rem 1.2rem;
+
+border-radius: 20px;
+
+line-height: 1.6;
+
+word-wrap: break-word;
+
+animation: fadeIn 0.3s ease;
+
+font-size: 0.98rem;
+
+}
+
+
+
+.message.user {
+
+align-self: flex-end;
+
+background: #1a73e8;
+
+color: white;
+
+border-bottom-right-radius: 6px;
+
+}
+
+
+
+.message.assistant {
+
+align-self: flex-start;
+
+background: #e9edf4;
+
+color: #1e1e2f;
+
+border-bottom-left-radius: 6px;
+
+}
+
+
+
+body.dark .message.assistant {
+
+background: #3a3a56;
+
+color: #eee;
+
+}
+
+
+
+.message pre {
+
+background: rgba(0, 0, 0, 0.08);
+
+padding: 0.8rem;
+
+border-radius: 8px;
+
+overflow-x: auto;
+
+margin: 0.5rem 0;
+
+}
+
+
+
+body.dark .message pre {
+
+background: rgba(255, 255, 255, 0.08);
+
+}
+
+
+
+.message code {
+
+font-family: 'Courier New', monospace;
+
+font-size: 0.9em;
+
+}
+
+
+
+.typing {
+
+align-self: flex-start;
+
+background: #e9edf4;
+
+padding: 0.8rem 1.5rem;
+
+border-radius: 20px;
+
+border-bottom-left-radius: 6px;
+
+display: flex;
+
+gap: 0.3rem;
+
+}
+
+
+
+body.dark .typing {
+
+background: #3a3a56;
+
+}
+
+
+
+.typing span {
+
+display: inline-block;
+
+width: 8px;
+
+height: 8px;
+
+background: #888;
+
+border-radius: 50%;
+
+animation: bounce 1.2s infinite;
+
+}
+
+
+
+.typing span:nth-child(2) {
+
+animation-delay: 0.2s;
+
+}
+
+.typing span:nth-child(3) {
+
+animation-delay: 0.4s;
+
+}
+
+
+
+@keyframes bounce {
+
+0%,
+
+60%,
+
+100% {
+
+transform: translateY(0);
+
+}
+
+30% {
+
+transform: translateY(-8px);
+
+}
+
+}
+
+
+
+@keyframes fadeIn {
+
+from {
+
+opacity: 0;
+
+transform: translateY(10px);
+
+}
+
+to {
+
+opacity: 1;
+
+transform: translateY(0);
+
+}
+
+}
+
+
+
+/* ----- Input area ----- */
+
+.input-area {
+
+display: flex;
+
+gap: 0.6rem;
+
+padding: 1rem 1.8rem 1.5rem;
+
+background: #ffffff;
+
+border-top: 1px solid #eef2f7;
+
+flex-shrink: 0;
+
+transition: background 0.3s, border-color 0.3s;
+
+}
+
+
+
+body.dark .input-area {
+
+background: #2a2a3e;
+
+border-top-color: #3e3e5a;
+
+}
+
+
+
+.input-area textarea {
+
+flex: 1;
+
+padding: 0.8rem 1.2rem;
+
+border: 1px solid #d0d7e2;
+
+border-radius: 28px;
+
+font-size: 1rem;
+
+font-family: inherit;
+
+resize: none;
+
+outline: none;
+
+transition: border-color 0.2s, background 0.3s;
+
+background: #f2f5fa;
+
+min-height: 52px;
+
+max-height: 140px;
+
+}
+
+
+
+body.dark .input-area textarea {
+
+background: #3a3a56;
+
+border-color: #555577;
+
+color: #eee;
+
+}
+
+
+
+.input-area textarea:focus {
+
+border-color: #1a73e8;
+
+background: white;
+
+}
+
+
+
+body.dark .input-area textarea:focus {
+
+background: #3f3f5f;
+
+border-color: #4a8af4;
+
+}
+
+
+
+.input-area button {
+
+background: #1a73e8;
+
+color: white;
+
+border: none;
+
+padding: 0 1.8rem;
+
+border-radius: 28px;
+
+font-weight: 600;
+
+font-size: 1rem;
+
+cursor: pointer;
+
+transition: background 0.2s, transform 0.1s;
+
+white-space: nowrap;
+
+min-height: 52px;
+
+}
+
+
+
+.input-area button:hover {
+
+background: #1557b0;
+
+}
+
+
+
+.input-area button:active {
+
+transform: scale(0.96);
+
+}
+
+
+
+.input-area button:disabled {
+
+opacity: 0.5;
+
+pointer-events: none;
+
+}
+
+
+
+/* ----- Footer note ----- */
+
+.footer-note {
+
+padding: 0.5rem 1.8rem 0.8rem;
+
+text-align: center;
+
+font-size: 0.75rem;
+
+color: #999;
+
+background: #fafcff;
+
+border-top: 1px solid #eef2f7;
+
+transition: background 0.3s, border-color 0.3s;
+
+flex-shrink: 0;
+
+}
+
+
+
+body.dark .footer-note {
+
+background: #22223a;
+
+border-top-color: #3e3e5a;
+
+color: #888;
+
+}
+
+
+
+/* scrollbar */
+
+.messages::-webkit-scrollbar {
+
+width: 6px;
+
+}
+
+.messages::-webkit-scrollbar-track {
+
+background: transparent;
+
+}
+
+.messages::-webkit-scrollbar-thumb {
+
+background: #c0c7d4;
+
+border-radius: 10px;
+
+}
+
+body.dark .messages::-webkit-scrollbar-thumb {
+
+background: #555577;
+
+}
+
+
+
+@media (max-width: 600px) {
+
+.chat-container {
+
+height: 100vh;
+
+border-radius: 0;
+
+}
+
+.header h1 {
+
+font-size: 1.1rem;
+
+}
+
+.message {
+
+max-width: 90%;
+
+}
+
+.input-area {
+
+padding: 0.8rem 1rem 1.2rem;
+
+gap: 0.4rem;
+
+}
+
+.input-area textarea {
+
+font-size: 0.95rem;
+
+min-height: 44px;
+
+padding: 0.6rem 1rem;
+
+}
+
+.input-area button {
+
+padding: 0 1.2rem;
+
+min-height: 44px;
+
+font-size: 0.9rem;
+
+}
+
+}
+
+</style>
+
 </head>
+
+
+
 <body>
-  <!-- Mobile hamburger -->
-  <button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar">
-    <span></span>
-    <span></span>
-    <span></span>
-  </button>
 
-  <div class="app">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="logo">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="28" height="28" rx="6" fill="#6c5cf0" />
-            <path d="M7 14L12 9L17 14L12 19L7 14Z" fill="white" />
-          </svg>
-          <span>Vexel AI</span>
-        </div>
-        <button class="new-chat-btn" id="newChatBtn">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          </svg>
-          New Chat
-        </button>
-      </div>
 
-      <div class="sidebar-search">
-        <input type="text" placeholder="Search chats..." disabled />
-      </div>
 
-      <div class="chat-history">
-        <div class="history-label">Recent Chats</div>
-        <ul class="history-list">
-          <li class="history-item">Chat about AI trends</li>
-          <li class="history-item">Trip planning help</li>
-          <li class="history-item">Cooking recipes</li>
-          <li class="history-item">Book recommendations</li>
-        </ul>
-      </div>
-    </aside>
+<div class="chat-container">
 
-    <!-- Main chat area -->
-    <main class="main">
-      <div class="chat-container" id="chatContainer">
-        <!-- Empty state -->
-        <div class="empty-state" id="emptyState">
-          <div class="empty-icon">
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="24" cy="24" r="20" stroke="#6c5cf0" stroke-width="2" />
-              <path d="M14 22L22 14L38 30L30 38L14 22Z" fill="#6c5cf0" fill-opacity="0.2" stroke="#6c5cf0" stroke-width="2" stroke-linejoin="round" />
-              <circle cx="20" cy="20" r="2" fill="#6c5cf0" />
-            </svg>
-          </div>
-          <h1>Welcome to Vexel AI</h1>
-          <p class="subtitle">Search the web & get instant, cited summaries</p>
-          <div class="example-prompts">
-            <button class="example-card" data-prompt="What is the latest in AI?">What is the latest in AI?</button>
-            <button class="example-card" data-prompt="Summarize recent climate change news">Summarize recent climate change news</button>
-            <button class="example-card" data-prompt="Best productivity tips 2025">Best productivity tips 2025</button>
-            <button class="example-card" data-prompt="How does quantum computing work?">How does quantum computing work?</button>
-          </div>
-        </div>
 
-        <!-- Messages will be inserted here -->
-        <div class="messages" id="messages"></div>
-      </div>
 
-      <!-- Composer -->
-      <div class="composer">
-        <div class="composer-inner">
-          <textarea
-            id="userInput"
-            rows="1"
-            placeholder="Ask Vexel AI anything..."
-          ></textarea>
-          <button id="sendBtn" disabled aria-label="Send message">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M2 10L18 2L10 18L8 12L2 10Z" fill="currentColor" />
-            </svg>
-          </button>
-        </div>
-        <p class="disclaimer">Vexel AI uses web search and AI. Verify important information.</p>
-      </div>
-    </main>
-  </div>
+<!-- Header -->
 
-  <script src="script.js" defer></script>
+<div class="header">
+
+<h1>✨ Gemini Chat</h1>
+
+<div class="header-actions">
+
+<button onclick="clearChat()">🗑️ Clear</button>
+
+<button onclick="toggleDark()">🌙 Dark</button>
+
+</div>
+
+</div>
+
+
+
+<!-- Messages -->
+
+<div class="messages" id="messages">
+
+<div class="message assistant">
+
+👋 Hello! I'm Gemini. Ask me anything.
+
+</div>
+
+</div>
+
+
+
+<!-- Input -->
+
+<div class="input-area">
+
+<textarea id="promptInput" rows="1" placeholder="Type your message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+
+<button id="sendBtn" onclick="sendMessage()">Send</button>
+
+</div>
+
+
+
+<!-- Footer -->
+
+<div class="footer-note">
+
+Free tier – 1M tokens/day &nbsp;·&nbsp; Responses may take a few seconds
+
+</div>
+
+</div>
+
+
+
+<script>
+
+// =============================================================
+
+// 🔐 NO API KEY HERE – it's safely stored on the Vercel backend
+
+// =============================================================
+
+
+
+const messagesDiv = document.getElementById('messages');
+
+const promptInput = document.getElementById('promptInput');
+
+const sendBtn = document.getElementById('sendBtn');
+
+
+
+let isDark = false;
+
+let isWaiting = false;
+
+
+
+// -------------------------------------------------------------
+
+// Render helpers
+
+// -------------------------------------------------------------
+
+function addMessage(role, text) {
+
+const div = document.createElement('div');
+
+div.className = `message ${role}`;
+
+
+
+if (role === 'assistant') {
+
+div.innerHTML = marked.parse(text);
+
+} else {
+
+div.textContent = text;
+
+}
+
+
+
+messagesDiv.appendChild(div);
+
+scrollToBottom();
+
+}
+
+
+
+function showTyping() {
+
+const div = document.createElement('div');
+
+div.className = 'typing';
+
+div.id = 'typingIndicator';
+
+div.innerHTML = '<span></span><span></span><span></span>';
+
+messagesDiv.appendChild(div);
+
+scrollToBottom();
+
+}
+
+
+
+function removeTyping() {
+
+const el = document.getElementById('typingIndicator');
+
+if (el) el.remove();
+
+}
+
+
+
+function scrollToBottom() {
+
+messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+}
+
+
+
+function clearChat() {
+
+if (isWaiting) return;
+
+messagesDiv.innerHTML = '';
+
+addMessage('assistant', '✨ Conversation cleared. Ask me anything!');
+
+}
+
+
+
+function toggleDark() {
+
+isDark = !isDark;
+
+document.body.classList.toggle('dark', isDark);
+
+const btn = document.querySelector('.header-actions button:last-child');
+
+btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+
+}
+
+
+
+// -------------------------------------------------------------
+
+// Send message to OUR OWN BACKEND (not Google directly)
+
+// -------------------------------------------------------------
+
+async function sendMessage() {
+
+const prompt = promptInput.value.trim();
+
+if (!prompt || isWaiting) return;
+
+
+
+isWaiting = true;
+
+sendBtn.disabled = true;
+
+promptInput.disabled = true;
+
+
+
+addMessage('user', prompt);
+
+promptInput.value = '';
+
+promptInput.style.height = 'auto';
+
+showTyping();
+
+
+
+try {
+
+// 🟢 Call your Vercel serverless function
+
+const res = await fetch('/api/gemini', {
+
+method: 'POST',
+
+headers: { 'Content-Type': 'application/json' },
+
+body: JSON.stringify({ prompt: prompt })
+
+});
+
+
+
+const data = await res.json();
+
+
+
+removeTyping();
+
+
+
+if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+
+const reply = data.candidates[0].content.parts[0].text;
+
+addMessage('assistant', reply);
+
+} else {
+
+const errorMsg = data.error?.message || JSON.stringify(data, null, 2);
+
+addMessage('assistant', `❌ Error:\n\`\`\`\n${errorMsg}\n\`\`\``);
+
+}
+
+} catch (err) {
+
+removeTyping();
+
+addMessage('assistant', `🚨 Network error:\n\`\`\`\n${err.message}\n\`\`\``);
+
+}
+
+
+
+isWaiting = false;
+
+sendBtn.disabled = false;
+
+promptInput.disabled = false;
+
+promptInput.focus();
+
+}
+
+
+
+// Auto-resize textarea
+
+promptInput.addEventListener('input', function() {
+
+this.style.height = 'auto';
+
+this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+
+});
+
+
+
+window.addEventListener('load', () => promptInput.focus());
+
+</script>
+
+
+
 </body>
+
 </html>
+
