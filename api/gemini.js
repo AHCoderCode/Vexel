@@ -40,7 +40,7 @@ return res.status(500).json({ error: 'Server configuration error' });
 
 // You can change the model here if you want
 
-const MODEL = 'gemini-1.5-flash'; // or 'gemini-1.5-pro'
+const MODEL = 'gemini-2.5-flash'; // or 'gemini-1.5-pro'
 
 
 
