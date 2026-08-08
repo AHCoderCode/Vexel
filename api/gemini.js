@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   // ⚠️ If you continue getting 503 errors, change this to 'gemini-1.5-flash'
-  const MODEL = 'gemini-3.6-flash'; 
+  const MODEL = 'gemini-2.0-flash-exp'; 
 
   try {
     let currentParts = [];
