@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   // Using gemini-1.5-flash as 3.6 does not exist and 1.5 supports text, images, and history.
-  const MODEL = 'gemini-1.5-flash'; 
+  const MODEL = 'gemini-3.6-flash'; 
 
   try {
     // 1. Build the current message parts
