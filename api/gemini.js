@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // Only accept POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -10,19 +9,17 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Prompt or Image is required' });
   }
 
-  // 🔐 Read the API key from Vercel Environment Variables
   const API_KEY = process.env.GEMINI_API_KEY;
 
   if (!API_KEY) {
     console.error('❌ GEMINI_API_KEY is not set in environment variables');
-    return res.status(500).json({ error: 'Server configuration error' });
+    return res.status(500).json({ error: { message: 'Server configuration error' } });
   }
 
-  // Using gemini-1.5-flash as 3.6 does not exist and 1.5 supports text, images, and history.
+  // ⚠️ If you continue getting 503 errors, change this to 'gemini-1.5-flash'
   const MODEL = 'gemini-3.6-flash'; 
 
   try {
-    // 1. Build the current message parts
     let currentParts = [];
     if (prompt) {
       currentParts.push({ text: prompt });
@@ -36,11 +33,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Combine previous history with the new message
-    // If no history exists, default to empty array
     let contents = Array.isArray(history) ? history : [];
     
-    // 3. Append the newest message
     contents.push({
       role: 'user',
       parts: currentParts
@@ -63,10 +57,9 @@ export default async function handler(req, res) {
       return res.status(response.status).json(data);
     }
 
-    // Forward the entire response back to the frontend
     res.status(200).json(data);
   } catch (error) {
     console.error('Gemini API error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: { message: error.message } });
   }
 }
