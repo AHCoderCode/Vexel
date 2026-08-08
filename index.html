@@ -9,316 +9,53 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
-    /* ================================================================
-       🧠  PROFESSIONAL DEEPSEEK‑STYLE LAYOUT – VEXEL AI
-       ================================================================ */
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #13151a;
-      color: #e0e0e0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      overflow: hidden;
-    }
-
-    .chat-container {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background: #1a1d27;
-    }
-
-    .header {
-      background: #1f2230;
-      border-bottom: 1px solid #2a2d3a;
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-    }
-
-    .header h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #ffffff;
-      letter-spacing: -0.3px;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .header h1::before {
-      content: '◈';
-      font-size: 1.4rem;
-      color: #6d8aff;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 0.8rem;
-      align-items: center;
-    }
-
-    .header-actions button {
-      background: #2a2d3a;
-      border: 1px solid #3a3d4a;
-      color: #c0c5d0;
-      padding: 0.5rem 1.2rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-
-    .header-actions button:hover {
-      background: #343845;
-      border-color: #5a5f72;
-      color: #ffffff;
-    }
-
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 2rem 2.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      background: #1a1d27;
-      scroll-behavior: smooth;
-    }
-
-    .message {
-      max-width: 75%;
-      padding: 0.9rem 1.4rem;
-      border-radius: 16px;
-      line-height: 1.6;
-      word-wrap: break-word;
-      font-size: 0.95rem;
-      animation: fadeIn 0.25s ease;
-    }
-
-    .message.user {
-      align-self: flex-end;
-      background: #2b3148;
-      color: #ffffff;
-      border-bottom-right-radius: 4px;
-      border: 1px solid #3d4563;
-    }
-
-    .message.assistant {
-      align-self: flex-start;
-      background: #232734;
-      color: #d0d5e0;
-      border-bottom-left-radius: 4px;
-      border: 1px solid #2e3347;
-    }
-
-    /* Images in chat */
-    .message img.chat-img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-      max-height: 300px;
-      object-fit: cover;
-    }
-
-    /* Code block styling with relative position for copy button */
-    .message pre {
-      background: #11131a;
-      padding: 2.5rem 0.8rem 0.8rem; /* Extra top padding for button */
-      border-radius: 8px;
-      overflow-x: auto;
-      margin: 0.5rem 0;
-      border: 1px solid #2a2d3a;
-      position: relative;
-    }
-
-    .message code {
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.85em;
-    }
-
-    /* Copy Button */
-    .copy-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: #2b3148;
-      border: 1px solid #3d4563;
-      color: #c0c5d0;
-      padding: 0.3rem 0.6rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .copy-btn:hover {
-      background: #3d4563;
-      color: #fff;
-    }
-
-    .typing {
-      align-self: flex-start;
-      background: #232734;
-      border: 1px solid #2e3347;
-      padding: 0.7rem 1.4rem;
-      border-radius: 16px;
-      border-bottom-left-radius: 4px;
-      display: flex;
-      gap: 0.3rem;
-    }
-
-    .typing span {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #6d8aff;
-      border-radius: 50%;
-      animation: bounce 1.2s infinite;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #13151a; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+    .chat-container { width: 100vw; height: 100vh; display: flex; flex-direction: column; background: #1a1d27; }
+    .header { background: #1f2230; border-bottom: 1px solid #2a2d3a; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .header h1 { font-size: 1.5rem; font-weight: 600; color: #ffffff; letter-spacing: -0.3px; display: flex; align-items: center; gap: 0.5rem; }
+    .header h1::before { content: '◈'; font-size: 1.4rem; color: #6d8aff; }
+    .header-actions { display: flex; gap: 0.8rem; align-items: center; }
+    .header-actions button { background: #2a2d3a; border: 1px solid #3a3d4a; color: #c0c5d0; padding: 0.5rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s ease; }
+    .header-actions button:hover { background: #343845; border-color: #5a5f72; color: #ffffff; }
+    
+    .messages { flex: 1; overflow-y: auto; padding: 2rem 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; background: #1a1d27; scroll-behavior: smooth; }
+    .message { max-width: 75%; padding: 0.9rem 1.4rem; border-radius: 16px; line-height: 1.6; word-wrap: break-word; font-size: 0.95rem; animation: fadeIn 0.25s ease; }
+    .message.user { align-self: flex-end; background: #2b3148; color: #ffffff; border-bottom-right-radius: 4px; border: 1px solid #3d4563; }
+    .message.assistant { align-self: flex-start; background: #232734; color: #d0d5e0; border-bottom-left-radius: 4px; border: 1px solid #2e3347; }
+    .message img.chat-img { max-width: 100%; border-radius: 8px; margin-bottom: 0.5rem; max-height: 300px; object-fit: cover; }
+    
+    .message pre { background: #11131a; padding: 2.5rem 0.8rem 0.8rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; border: 1px solid #2a2d3a; position: relative; }
+    .message code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85em; }
+    .copy-btn { position: absolute; top: 8px; right: 8px; background: #2b3148; border: 1px solid #3d4563; color: #c0c5d0; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
+    .copy-btn:hover { background: #3d4563; color: #fff; }
+    
+    .typing { align-self: flex-start; background: #232734; border: 1px solid #2e3347; padding: 0.7rem 1.4rem; border-radius: 16px; border-bottom-left-radius: 4px; display: flex; gap: 0.3rem; }
+    .typing span { display: inline-block; width: 8px; height: 8px; background: #6d8aff; border-radius: 50%; animation: bounce 1.2s infinite; }
     .typing span:nth-child(2) { animation-delay: 0.2s; }
     .typing span:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes bounce {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-6px); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Input wrapper to hold image preview */
-    .input-wrapper {
-      background: #1a1d27;
-      border-top: 1px solid #2a2d3a;
-      display: flex;
-      flex-direction: column;
-      padding: 0.5rem 2.5rem 1.5rem;
-      flex-shrink: 0;
-    }
-
-    .image-preview-container {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      padding-bottom: 0.5rem;
-    }
     
-    .image-preview-container img {
-      height: 50px;
-      border-radius: 6px;
-      border: 1px solid #3d4563;
-    }
-
-    .remove-image-btn {
-      background: #ff4d4d;
-      border: none;
-      color: white;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .input-area {
-      display: flex;
-      gap: 0.8rem;
-      align-items: flex-end;
-    }
-
-    .attach-btn {
-      background: #232734;
-      border: 1px solid #2e3347;
-      color: #c0c5d0;
-      font-size: 1.2rem;
-      padding: 0 1rem;
-      border-radius: 12px;
-      cursor: pointer;
-      height: 52px;
-      transition: all 0.2s;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .attach-btn:hover {
-      background: #343845;
-      color: white;
-    }
-
-    .input-area textarea {
-      flex: 1;
-      padding: 0.9rem 1.2rem;
-      background: #232734;
-      border: 1px solid #2e3347;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-family: inherit;
-      resize: none;
-      outline: none;
-      color: #e0e0e0;
-      transition: border-color 0.2s, background 0.2s;
-      min-height: 52px;
-      max-height: 140px;
-    }
-
-    .input-area textarea:focus {
-      border-color: #6d8aff;
-      background: #262b3a;
-    }
-
-    .input-area button.send-btn {
-      background: #2b3148;
-      border: 1px solid #3d4563;
-      color: #ffffff;
-      padding: 0 1.8rem;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      height: 52px;
-    }
-
-    .input-area button.send-btn:hover {
-      background: #6d8aff;
-      border-color: #6d8aff;
-    }
-
-    .footer-note {
-      padding: 0.6rem 2.5rem 0.8rem;
-      text-align: center;
-      font-size: 0.75rem;
-      color: #5a6070;
-      background: #1a1d27;
-      flex-shrink: 0;
-    }
-
+    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .input-wrapper { background: #1a1d27; border-top: 1px solid #2a2d3a; display: flex; flex-direction: column; padding: 0.5rem 2.5rem 1.5rem; flex-shrink: 0; }
+    .image-preview-container { display: none; align-items: center; gap: 10px; padding-bottom: 0.5rem; }
+    .image-preview-container img { height: 50px; border-radius: 6px; border: 1px solid #3d4563; }
+    .remove-image-btn { background: #ff4d4d; border: none; color: white; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px; display: flex; justify-content: center; align-items: center; }
+    
+    .input-area { display: flex; gap: 0.8rem; align-items: flex-end; }
+    .attach-btn { background: #232734; border: 1px solid #2e3347; color: #c0c5d0; font-size: 1.2rem; padding: 0 1rem; border-radius: 12px; cursor: pointer; height: 52px; transition: all 0.2s; display: flex; justify-content: center; align-items: center; }
+    .attach-btn:hover { background: #343845; color: white; }
+    .input-area textarea { flex: 1; padding: 0.9rem 1.2rem; background: #232734; border: 1px solid #2e3347; border-radius: 12px; font-size: 0.95rem; font-family: inherit; resize: none; outline: none; color: #e0e0e0; transition: border-color 0.2s, background 0.2s; min-height: 52px; max-height: 140px; }
+    .input-area textarea:focus { border-color: #6d8aff; background: #262b3a; }
+    .input-area button.send-btn { background: #2b3148; border: 1px solid #3d4563; color: #ffffff; padding: 0 1.8rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease; height: 52px; }
+    .input-area button.send-btn:hover { background: #6d8aff; border-color: #6d8aff; }
+    
+    .footer-note { padding: 0.6rem 2.5rem 0.8rem; text-align: center; font-size: 0.75rem; color: #5a6070; background: #1a1d27; flex-shrink: 0; }
     .messages::-webkit-scrollbar { width: 6px; }
     .messages::-webkit-scrollbar-track { background: transparent; }
     .messages::-webkit-scrollbar-thumb { background: #2e3347; border-radius: 10px; }
-
+    
     @media (max-width: 700px) {
       .input-wrapper { padding: 0.5rem 1rem 1rem; }
       .messages { padding: 1.2rem 1rem; }
@@ -328,7 +65,6 @@
 <body>
 
 <div class="chat-container">
-  <!-- Header -->
   <div class="header">
     <h1>Vexel AI</h1>
     <div class="header-actions">
@@ -336,35 +72,23 @@
     </div>
   </div>
 
-  <!-- Messages -->
   <div class="messages" id="messages"></div>
 
-  <!-- Input Area -->
   <div class="input-wrapper">
-    <!-- Image Preview -->
     <div class="image-preview-container" id="imagePreviewContainer">
       <img id="imagePreview" src="" alt="Preview" />
       <button class="remove-image-btn" onclick="removeImage()">✕</button>
     </div>
 
     <div class="input-area">
-      <!-- Hidden file input -->
       <input type="file" id="fileInput" accept="image/*" hidden onchange="handleImageSelection(event)">
-      
-      <!-- Attach Button -->
       <button class="attach-btn" onclick="document.getElementById('fileInput').click()" title="Attach Image">📎</button>
-      
-      <!-- Textarea -->
       <textarea id="promptInput" rows="1" placeholder="Type your message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
-      
-      <!-- Send Button -->
       <button id="sendBtn" class="send-btn" onclick="sendMessage()">Send</button>
     </div>
   </div>
 
-  <div class="footer-note">
-    1000 Messages a day! &nbsp;·&nbsp; Supports Text & Images
-  </div>
+  <div class="footer-note">1000 Messages a day! &nbsp;·&nbsp; Supports Text & Images</div>
 </div>
 
 <script>
@@ -380,41 +104,37 @@
   let currentImageBase64 = null;
   let currentImageMimeType = null;
 
-  // ==========================================
-  // INITIALIZATION & MEMORY
-  // ==========================================
   window.addEventListener('load', () => {
     promptInput.focus();
     loadMemory();
   });
 
   function loadMemory() {
+    messagesDiv.innerHTML = ''; // Clear container
     const saved = localStorage.getItem('vexel_history');
     if (saved) {
-      chatHistory = JSON.parse(saved);
-      // Render saved history
-      if(chatHistory.length > 0) {
-        chatHistory.forEach(msg => {
-          const role = msg.role === 'model' ? 'assistant' : 'user';
-          // Find text part
-          const textPart = msg.parts.find(p => p.text);
-          const text = textPart ? textPart.text : '';
-          // Render to UI (We strip images from UI render on refresh to save localStorage space)
-          renderMessage(role, text, null, false);
-        });
+      try {
+        chatHistory = JSON.parse(saved);
+        if(chatHistory.length > 0) {
+          chatHistory.forEach(msg => {
+            const role = msg.role === 'model' ? 'assistant' : 'user';
+            const textPart = msg.parts.find(p => p.text);
+            const text = textPart ? textPart.text : '';
+            renderMessage(role, text, null, false);
+          });
+          setTimeout(scrollToBottom, 100);
+          return; // Exit here so we don't show the default welcome message
+        }
+      } catch (e) {
+        console.error("Failed to parse history", e);
       }
-    } else {
-      renderMessage('assistant', '👋 Hello! I\'m Vexel. Ask me anything or upload an image.', null, false);
     }
+    // Render default welcome message if no history exists
+    renderMessage('assistant', '👋 Hello! I\'m Vexel. Ask me anything or upload an image.', null, false);
   }
 
   function saveMemory() {
-    // Save to localStorage (avoiding large base64 image strings to prevent quota limits)
-    const textOnlyHistory = chatHistory.map(msg => ({
-      role: msg.role,
-      parts: msg.parts.filter(p => p.text) 
-    }));
-    localStorage.setItem('vexel_history', JSON.stringify(textOnlyHistory));
+    localStorage.setItem('vexel_history', JSON.stringify(chatHistory));
   }
 
   function clearChat() {
@@ -426,29 +146,21 @@
     renderMessage('assistant', '✨ Conversation cleared. Ask me anything!', null, false);
   }
 
-  // ==========================================
-  // UI RENDERERS
-  // ==========================================
   function renderMessage(role, text, imageSrc = null, smoothScroll = true) {
     const div = document.createElement('div');
     div.className = `message ${role}`;
 
     let contentHtml = '';
-
-    // If an image was attached by the user, show it
-    if (imageSrc) {
-      contentHtml += `<img src="${imageSrc}" class="chat-img" />`;
-    }
+    if (imageSrc) contentHtml += `<img src="${imageSrc}" class="chat-img" />`;
 
     if (role === 'assistant') {
       contentHtml += marked.parse(text);
     } else {
-      contentHtml += text.replace(/\n/g, '<br>'); // preserve line breaks for user text
+      contentHtml += text.replace(/\n/g, '<br>'); 
     }
 
     div.innerHTML = contentHtml;
     
-    // Add Copy Buttons to code blocks
     if (role === 'assistant') {
       const preTags = div.querySelectorAll('pre');
       preTags.forEach(pre => {
@@ -487,9 +199,6 @@
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
 
-  // ==========================================
-  // IMAGE HANDLING
-  // ==========================================
   function handleImageSelection(event) {
     const file = event.target.files[0];
     if (file) {
@@ -497,10 +206,7 @@
       reader.onload = function(e) {
         imagePreview.src = e.target.result;
         imagePreviewContainer.style.display = 'flex';
-        
-        // Save base64 for API
-        const base64String = e.target.result.split(',')[1];
-        currentImageBase64 = base64String;
+        currentImageBase64 = e.target.result.split(',')[1];
         currentImageMimeType = file.type;
       };
       reader.readAsDataURL(file);
@@ -515,9 +221,6 @@
     currentImageMimeType = null;
   }
 
-  // ==========================================
-  // SEND MESSAGE LOGIC
-  // ==========================================
   async function sendMessage() {
     const prompt = promptInput.value.trim();
     if ((!prompt && !currentImageBase64) || isWaiting) return;
@@ -526,28 +229,17 @@
     sendBtn.disabled = true;
     promptInput.disabled = true;
 
-    // 1. Render User Message Visually
+    // Render User Message Visually
     renderMessage('user', prompt, imagePreview.src);
 
-    // 2. Prepare payload for backend
+    // Prepare payload (Combine existing history + current message)
     const payload = {
       prompt: prompt,
-      history: chatHistory, // Send previous memory to backend
-      image: currentImageBase64 ? {
-        mimeType: currentImageMimeType,
-        data: currentImageBase64
-      } : null
+      history: chatHistory, 
+      image: currentImageBase64 ? { mimeType: currentImageMimeType, data: currentImageBase64 } : null
     };
 
-    // 3. Update local history (User turn)
-    let userParts = [];
-    if (prompt) userParts.push({ text: prompt });
-    if (currentImageBase64) {
-      userParts.push({ inlineData: { mimeType: currentImageMimeType, data: currentImageBase64 }});
-    }
-    chatHistory.push({ role: 'user', parts: userParts });
-
-    // 4. Cleanup Input
+    // Cleanup Input
     promptInput.value = '';
     promptInput.style.height = 'auto';
     removeImage();
@@ -563,22 +255,28 @@
       const data = await res.json();
       removeTyping();
 
-      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+      // IF ERROR (Like 503 High Demand)
+      if (!res.ok || data.error) {
+        const errorMsg = data.error?.message || JSON.stringify(data, null, 2);
+        renderMessage('assistant', `⚠️ **API Error:**\n${errorMsg}\n\n*Note: Your chat history is safe. Try sending your message again in a minute.*`);
+        // We do NOT update memory here, keeping the array clean so you can safely retry.
+      } 
+      // IF SUCCESS
+      else if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
         const reply = data.candidates[0].content.parts[0].text;
         
-        // Render assistant message
         renderMessage('assistant', reply);
 
-        // Update local history (Model turn)
+        // Update local history ONLY on success (Ensures strict User -> Assistant alternation)
+        chatHistory.push({ role: 'user', parts: [{ text: prompt || "[Attached an Image]" }] });
         chatHistory.push({ role: 'model', parts: [{ text: reply }] });
         saveMemory();
       } else {
-        const errorMsg = data.error?.message || JSON.stringify(data, null, 2);
-        renderMessage('assistant', `❌ Error:\n\`\`\`\n${errorMsg}\n\`\`\``);
+        renderMessage('assistant', `❌ Error parsing response.`);
       }
     } catch (err) {
       removeTyping();
-      renderMessage('assistant', `🚨 Network error:\n\`\`\`\n${err.message}\n\`\`\``);
+      renderMessage('assistant', `🚨 Network error: ${err.message}`);
     }
 
     isWaiting = false;
@@ -587,7 +285,6 @@
     promptInput.focus();
   }
 
-  // Auto-resize textarea
   promptInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 140) + 'px';
@@ -596,4 +293,3 @@
 
 </body>
 </html>
-
