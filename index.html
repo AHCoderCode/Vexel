@@ -7,88 +7,117 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* ================================================================
-       🚀  FUTURISTIC MODERN UI – VEXEL AI
+       🚀  FUTURISTIC ADVANCED UI – VEXEL AI
        ================================================================ */
     :root {
-      --bg-primary: #0b0c15;
-      --bg-secondary: #151725;
-      --bg-tertiary: #1e2133;
-      --text-primary: #eaeef5;
-      --text-secondary: #b4bcd0;
-      --text-muted: #6b728a;
-      --accent: #7c5cfc;
-      --accent-hover: #9b7efc;
-      --border: #2a2e42;
-      --msg-user-bg: #2a2050;
-      --msg-user-border: #453b7a;
-      --msg-assistant-bg: #151725;
-      --msg-assistant-border: #2a2e42;
-      --header-bg: #11131e;
-      --input-bg: #151725;
-      --input-border: #2a2e42;
-      --sidebar-bg: #0d0f1a;
-      --sidebar-hover: #1e2133;
-      --scrollbar-thumb: #2a2e42;
-      --glow: 0 0 15px rgba(124, 92, 252, 0.3);
+      --bg-deep: #0b0c18;
+      --bg-card: #12142a;
+      --bg-glass: rgba(18, 20, 42, 0.7);
+      --border-glow: rgba(120, 90, 255, 0.4);
+      --accent: #8a6dff;
+      --accent-bright: #b590ff;
+      --text-primary: #f0eefc;
+      --text-secondary: #c2c0dd;
+      --text-muted: #7878a0;
+      --user-bg: linear-gradient(135deg, #322b6b, #1a1445);
+      --assistant-bg: rgba(22, 24, 45, 0.8);
+      --header-bg: rgba(16, 18, 32, 0.9);
+      --sidebar-bg: rgba(10, 11, 22, 0.95);
+      --input-bg: rgba(20, 22, 40, 0.6);
+      --scroll-thumb: #3a3570;
+      --neon-glow: 0 0 15px rgba(138, 109, 255, 0.5);
+      --neon-glow-strong: 0 0 25px rgba(138, 109, 255, 0.8);
     }
 
     body.light-mode {
-      --bg-primary: #f0f2f8;
-      --bg-secondary: #ffffff;
-      --bg-tertiary: #e4e7f0;
-      --text-primary: #12142a;
-      --text-secondary: #3a3d52;
-      --text-muted: #6e7180;
+      --bg-deep: #f4f6ff;
+      --bg-card: #ffffff;
+      --bg-glass: rgba(255,255,255,0.7);
+      --border-glow: rgba(100, 80, 255, 0.3);
       --accent: #6c5ce7;
-      --accent-hover: #8a7ef0;
-      --border: #d4d7e3;
-      --msg-user-bg: #e8e5ff;
-      --msg-user-border: #c4bef5;
-      --msg-assistant-bg: #f8f9fc;
-      --msg-assistant-border: #d4d7e3;
-      --header-bg: #ffffff;
-      --input-bg: #ffffff;
-      --input-border: #d4d7e3;
-      --sidebar-bg: #f5f6fa;
-      --sidebar-hover: #e4e7f0;
-      --scrollbar-thumb: #c4c7d4;
-      --glow: 0 0 12px rgba(108, 92, 231, 0.2);
+      --accent-bright: #8c7cf0;
+      --text-primary: #181a2e;
+      --text-secondary: #4a4b65;
+      --text-muted: #7b7d98;
+      --user-bg: linear-gradient(135deg, #e0dcff, #cbc3ff);
+      --assistant-bg: rgba(255,255,255,0.85);
+      --header-bg: rgba(255,255,255,0.9);
+      --sidebar-bg: rgba(240,242,255,0.95);
+      --input-bg: rgba(255,255,255,0.8);
+      --scroll-thumb: #b0acd5;
+      --neon-glow: 0 0 12px rgba(108, 92, 231, 0.4);
+      --neon-glow-strong: 0 0 20px rgba(108, 92, 231, 0.7);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: var(--bg-primary);
+      background: var(--bg-deep);
       color: var(--text-primary);
       display: flex;
       height: 100vh;
       overflow: hidden;
-      transition: background 0.3s, color 0.3s;
+      transition: background 0.4s, color 0.4s;
+      position: relative;
+    }
+
+    /* Animated background gradient orbs */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(138,109,255,0.15) 0%, transparent 70%);
+      top: -200px;
+      left: -200px;
+      border-radius: 50%;
+      animation: floatOrb 12s ease-in-out infinite;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(180,140,255,0.1) 0%, transparent 70%);
+      bottom: -150px;
+      right: -150px;
+      border-radius: 50%;
+      animation: floatOrb 15s ease-in-out infinite reverse;
+      pointer-events: none;
+    }
+    @keyframes floatOrb {
+      0%,100% { transform: translate(0,0) scale(1); }
+      25% { transform: translate(40px,-40px) scale(1.1); }
+      50% { transform: translate(-30px,30px) scale(0.9); }
+      75% { transform: translate(-30px,-30px) scale(1.05); }
     }
 
     /* Sidebar */
     .sidebar {
       width: 280px;
       background: var(--sidebar-bg);
-      border-right: 1px solid var(--border);
+      border-right: 1px solid var(--border-glow);
       display: flex;
       flex-direction: column;
       height: 100vh;
       flex-shrink: 0;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
       z-index: 30;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 4px 0 30px rgba(0,0,0,0.4);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 4px 0 30px rgba(0,0,0,0.5), var(--neon-glow);
+      position: relative;
     }
     .sidebar.hidden {
       transform: translateX(-100%);
       position: absolute;
       height: 100%;
     }
+
     .sidebar-header {
       padding: 1.5rem 1.2rem;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--border-glow);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -96,13 +125,26 @@
     .sidebar-header h2 {
       font-size: 1.3rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #7c5cfc, #a78bfa);
+      background: linear-gradient(135deg, #b590ff, #8a6dff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
     }
+    .close-sidebar-btn {
+      background: none;
+      border: 1px solid var(--border-glow);
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .close-sidebar-btn:hover {
+      background: var(--accent);
+      color: white;
+      box-shadow: var(--neon-glow);
+    }
+
     .new-chat-btn {
       background: var(--accent);
       border: none;
@@ -116,9 +158,9 @@
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
-      box-shadow: var(--glow);
+      box-shadow: var(--neon-glow);
     }
-    .new-chat-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
+    .new-chat-btn:hover { background: var(--accent-bright); transform: scale(1.08); }
 
     .chat-list {
       flex: 1;
@@ -135,11 +177,21 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: background 0.2s, color 0.2s;
+      transition: all 0.2s;
       gap: 0.5rem;
+      border: 1px solid transparent;
     }
-    .chat-list-item:hover { background: var(--sidebar-hover); }
-    .chat-list-item.active { background: var(--bg-tertiary); color: var(--text-primary); font-weight: 500; border: 1px solid var(--accent); }
+    .chat-list-item:hover {
+      background: rgba(138,109,255,0.15);
+      border-color: var(--border-glow);
+    }
+    .chat-list-item.active {
+      background: rgba(138,109,255,0.2);
+      border: 1px solid var(--accent);
+      color: white;
+      font-weight: 500;
+      box-shadow: 0 0 10px rgba(138,109,255,0.3);
+    }
     .chat-list-item .title {
       white-space: nowrap;
       overflow: hidden;
@@ -147,15 +199,14 @@
       max-width: 170px;
     }
     .chat-list-item .delete-chat {
-      background: rgba(255, 70, 70, 0.15);
+      background: rgba(255,70,70,0.2);
       border: none;
-      color: #ff6b6b;
+      color: #ff7575;
       cursor: pointer;
       font-size: 0.9rem;
       padding: 0.2rem 0.5rem;
       border-radius: 6px;
       transition: all 0.2s;
-      opacity: 0.9; /* Always visible */
     }
     .chat-list-item .delete-chat:hover { background: #ff4444; color: white; }
 
@@ -169,15 +220,15 @@
     }
     .header {
       background: var(--header-bg);
-      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-glow);
       padding: 1rem 1.8rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.4);
     }
     .header-left {
       display: flex;
@@ -186,26 +237,34 @@
     }
     .menu-toggle {
       background: none;
-      border: none;
+      border: 1px solid var(--border-glow);
       color: var(--text-secondary);
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       cursor: pointer;
-      padding: 0.3rem;
+      padding: 0.3rem 0.6rem;
       border-radius: 8px;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
-    .menu-toggle:hover { background: var(--bg-tertiary); }
+    .menu-toggle:hover {
+      background: var(--accent);
+      color: white;
+      box-shadow: var(--neon-glow);
+    }
+    .menu-toggle.hidden {
+      display: none;
+    }
 
     .header h1 {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #7c5cfc, #a78bfa);
+      background: linear-gradient(135deg, #b590ff, #8a6dff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 8px rgba(138,109,255,0.5);
     }
     .header-actions button {
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
+      background: rgba(22,24,45,0.6);
+      border: 1px solid var(--border-glow);
       color: var(--text-secondary);
       padding: 0.5rem 1rem;
       border-radius: 10px;
@@ -214,7 +273,12 @@
       transition: all 0.2s;
       backdrop-filter: blur(5px);
     }
-    .header-actions button:hover { background: var(--accent); border-color: var(--accent); color: white; box-shadow: var(--glow); }
+    .header-actions button:hover {
+      background: var(--accent);
+      border-color: var(--accent-bright);
+      color: white;
+      box-shadow: var(--neon-glow);
+    }
     .theme-btn { font-size: 1.2rem; padding: 0.4rem 0.8rem; }
 
     .messages {
@@ -224,7 +288,7 @@
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
-      background: var(--bg-primary);
+      background: transparent;
       scroll-behavior: smooth;
     }
     .message {
@@ -238,32 +302,31 @@
       position: relative;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 10px var(--border-glow);
+      border: 1px solid var(--border-glow);
     }
     .message.user {
       align-self: flex-end;
-      background: var(--msg-user-bg);
+      background: var(--user-bg);
       color: white;
       border-bottom-right-radius: 6px;
-      border: 1px solid var(--msg-user-border);
-      background: linear-gradient(135deg, #4b3b8c, #2a2050);
+      border: 1px solid rgba(138,109,255,0.6);
     }
     .message.assistant {
       align-self: flex-start;
-      background: var(--msg-assistant-bg);
+      background: var(--assistant-bg);
       color: var(--text-primary);
       border-bottom-left-radius: 6px;
-      border: 1px solid var(--msg-assistant-border);
     }
     .message img.chat-img { max-width: 100%; border-radius: 10px; margin-bottom: 0.5rem; max-height: 300px; object-fit: cover; }
 
     .message pre {
-      background: rgba(0,0,0,0.3);
+      background: rgba(0,0,0,0.35);
       padding: 2.5rem 0.8rem 0.8rem;
       border-radius: 10px;
       overflow-x: auto;
       margin: 0.5rem 0;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-glow);
       position: relative;
     }
     .message code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
@@ -272,8 +335,9 @@
       background: var(--accent); border: none;
       color: white; padding: 0.3rem 0.6rem; border-radius: 6px;
       font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 0 8px rgba(138,109,255,0.6);
     }
-    .copy-code-btn:hover { background: var(--accent-hover); }
+    .copy-code-btn:hover { background: var(--accent-bright); }
 
     /* Message actions */
     .message-actions {
@@ -284,82 +348,161 @@
       transition: opacity 0.2s;
     }
     .message.assistant:hover .message-actions { opacity: 1; }
-    @media (pointer: coarse) { .message-actions { opacity: 1; } } /* Always show on touch devices */
+    @media (pointer: coarse) { .message-actions { opacity: 1; } }
     .message-actions button {
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
+      background: rgba(22,24,45,0.7);
+      border: 1px solid var(--border-glow);
       color: var(--text-secondary);
       padding: 0.3rem 0.7rem;
       border-radius: 8px;
       font-size: 0.8rem;
       cursor: pointer;
       transition: all 0.2s;
+      backdrop-filter: blur(5px);
     }
-    .message-actions button:hover { background: var(--accent); border-color: var(--accent); color: white; }
-    .like-btn.liked, .dislike-btn.disliked { background: var(--accent); color: white; border-color: var(--accent); }
+    .message-actions button:hover {
+      background: var(--accent);
+      border-color: var(--accent-bright);
+      color: white;
+      box-shadow: var(--neon-glow);
+    }
+    .like-btn.liked, .dislike-btn.disliked {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent-bright);
+      box-shadow: var(--neon-glow);
+    }
 
     .typing {
       align-self: flex-start;
-      background: var(--msg-assistant-bg);
-      border: 1px solid var(--msg-assistant-border);
+      background: var(--assistant-bg);
+      border: 1px solid var(--border-glow);
       padding: 0.8rem 1.5rem;
       border-radius: 16px 16px 16px 4px;
       display: flex;
       gap: 0.3rem;
+      backdrop-filter: blur(5px);
     }
-    .typing span { display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: bounce 1.2s infinite; }
+    .typing span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-bright);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+      box-shadow: 0 0 6px var(--accent);
+    }
     .typing span:nth-child(2) { animation-delay: 0.2s; }
     .typing span:nth-child(3) { animation-delay: 0.4s; }
 
-    @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); }
+      30% { transform: translateY(-8px); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     .input-wrapper {
-      background: var(--bg-primary);
-      border-top: 1px solid var(--border);
+      background: transparent;
+      border-top: 1px solid var(--border-glow);
       padding: 0.8rem 2.5rem 1.5rem;
       flex-shrink: 0;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(8px);
     }
     .image-preview-container { display: none; align-items: center; gap: 10px; padding-bottom: 0.5rem; }
-    .image-preview-container img { height: 50px; border-radius: 8px; border: 1px solid var(--border); }
-    .remove-image-btn { background: #ff4d4d; border: none; color: white; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+    .image-preview-container img { height: 50px; border-radius: 8px; border: 1px solid var(--accent); }
+    .remove-image-btn {
+      background: #ff4d4d;
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .input-area { display: flex; gap: 0.8rem; align-items: flex-end; }
     .attach-btn {
-      background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-secondary);
-      font-size: 1.2rem; padding: 0 1rem; border-radius: 14px; cursor: pointer; height: 52px; transition: all 0.2s;
+      background: var(--input-bg);
+      border: 1px solid var(--border-glow);
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      padding: 0 1rem;
+      border-radius: 14px;
+      cursor: pointer;
+      height: 52px;
+      transition: all 0.2s;
+      backdrop-filter: blur(5px);
     }
-    .attach-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--accent); }
+    .attach-btn:hover { border-color: var(--accent); color: var(--accent-bright); }
     .input-area textarea {
-      flex: 1; padding: 0.9rem 1.2rem; background: var(--input-bg); border: 1px solid var(--input-border);
-      border-radius: 14px; font-size: 0.95rem; font-family: inherit; resize: none; outline: none;
-      color: var(--text-primary); transition: border-color 0.2s, box-shadow 0.2s; min-height: 52px; max-height: 140px;
+      flex: 1;
+      padding: 0.9rem 1.2rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border-glow);
+      border-radius: 14px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      color: var(--text-primary);
+      transition: all 0.2s;
+      min-height: 52px;
+      max-height: 140px;
+      backdrop-filter: blur(5px);
     }
-    .input-area textarea:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(124,92,252,0.3); }
+    .input-area textarea:focus {
+      border-color: var(--accent-bright);
+      box-shadow: 0 0 15px rgba(138,109,255,0.4);
+    }
     .input-area button.send-btn {
-      background: var(--accent); border: none; color: white; padding: 0 1.8rem; border-radius: 14px;
-      font-weight: 600; font-size: 0.95rem; cursor: pointer; height: 52px; transition: all 0.2s;
-      box-shadow: 0 0 20px rgba(124,92,252,0.4);
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0 1.8rem;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      height: 52px;
+      transition: all 0.2s;
+      box-shadow: var(--neon-glow);
     }
-    .input-area button.send-btn:hover { background: var(--accent-hover); box-shadow: 0 0 30px rgba(124,92,252,0.7); }
-    .input-area button.send-btn:disabled { opacity: 0.6; pointer-events: none; }
+    .input-area button.send-btn:hover {
+      background: var(--accent-bright);
+      box-shadow: var(--neon-glow-strong);
+      transform: scale(1.02);
+    }
+    .input-area button.send-btn:disabled { opacity: 0.5; pointer-events: none; }
 
     .footer-note {
-      padding: 0.6rem 2.5rem; text-align: center; font-size: 0.75rem; color: var(--text-muted);
-      background: var(--bg-primary); border-top: 1px solid var(--border); flex-shrink: 0;
+      padding: 0.6rem 2.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: transparent;
+      border-top: 1px solid var(--border-glow);
+      flex-shrink: 0;
+      backdrop-filter: blur(5px);
     }
 
     .messages::-webkit-scrollbar, .chat-list::-webkit-scrollbar { width: 6px; }
-    .messages::-webkit-scrollbar-thumb, .chat-list::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+    .messages::-webkit-scrollbar-thumb, .chat-list::-webkit-scrollbar-thumb {
+      background: var(--scroll-thumb);
+      border-radius: 10px;
+    }
 
-    /* Mobile responsive */
     @media (max-width: 768px) {
       .sidebar { position: absolute; left: 0; top: 0; height: 100%; z-index: 40; }
       .sidebar.hidden { transform: translateX(-100%); }
       .messages { padding: 1.5rem 1rem; }
       .input-wrapper { padding: 0.5rem 1rem 1rem; }
       .header { padding: 0.8rem 1rem; }
-      .menu-toggle { display: flex; }
     }
   </style>
 </head>
@@ -369,7 +512,7 @@
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <h2>◈ Vexel AI</h2>
-    <button class="new-chat-btn" onclick="createNewChat()" title="New chat">+</button>
+    <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close sidebar">✕</button>
   </div>
   <div class="chat-list" id="chatList"></div>
 </div>
@@ -378,7 +521,7 @@
 <div class="main-area">
   <div class="header">
     <div class="header-left">
-      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()" title="Open sidebar">☰</button>
       <h1>Vexel AI</h1>
     </div>
     <div class="header-actions">
@@ -406,7 +549,7 @@
 
 <script>
   // ============================================================
-  // STATE MANAGEMENT (unchanged logic)
+  // STATE MANAGEMENT (same reliable logic)
   // ============================================================
   const messagesDiv = document.getElementById('messages');
   const promptInput = document.getElementById('promptInput');
@@ -416,6 +559,7 @@
   const fileInput = document.getElementById('fileInput');
   const chatListEl = document.getElementById('chatList');
   const sidebar = document.getElementById('sidebar');
+  const menuToggle = document.getElementById('menuToggle');
 
   let isWaiting = false;
   let currentImageBase64 = null;
@@ -428,7 +572,7 @@
   let lastUserImage = null;
 
   // ============================================================
-  // INITIALIZATION (FIXED)
+  // INITIALIZATION + DYNAMIC TOGGLE BUTTON BEHAVIOR
   // ============================================================
   window.addEventListener('load', () => {
     loadAllChats();
@@ -448,11 +592,14 @@
 
     renderChatList();
     updateThemeIcon();
+    handleResponsiveSidebar();
+    updateToggleButtonVisibility();
     promptInput.focus();
 
-    // Auto-close sidebar on mobile by default, but keep toggle functional
-    handleResponsiveSidebar();
-    window.addEventListener('resize', handleResponsiveSidebar);
+    window.addEventListener('resize', () => {
+      handleResponsiveSidebar();
+      updateToggleButtonVisibility();
+    });
   });
 
   function handleResponsiveSidebar() {
@@ -460,6 +607,34 @@
       sidebar.classList.add('hidden');
     } else {
       sidebar.classList.remove('hidden');
+    }
+    updateToggleButtonVisibility();
+  }
+
+  function updateToggleButtonVisibility() {
+    if (window.innerWidth <= 768) {
+      // Mobile: menu toggle in header only when sidebar hidden
+      if (sidebar.classList.contains('hidden')) {
+        menuToggle.classList.remove('hidden');
+      } else {
+        menuToggle.classList.add('hidden');
+      }
+    } else {
+      // Desktop: always show header toggle? Better to hide when sidebar visible, show when hidden.
+      if (sidebar.classList.contains('hidden')) {
+        menuToggle.classList.remove('hidden');
+      } else {
+        menuToggle.classList.add('hidden');
+      }
+    }
+  }
+
+  function toggleSidebar() {
+    sidebar.classList.toggle('hidden');
+    updateToggleButtonVisibility();
+    if (window.innerWidth <= 768 && !sidebar.classList.contains('hidden')) {
+      // Sidebar opened on mobile, ensure header toggle hides
+      menuToggle.classList.add('hidden');
     }
   }
 
@@ -484,12 +659,7 @@
 
   function createNewChat(switchTo = true) {
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-    const newChat = {
-      id,
-      title: 'New Chat',
-      createdAt: Date.now(),
-      messages: []
-    };
+    const newChat = { id, title: 'New Chat', createdAt: Date.now(), messages: [] };
     allChats.unshift(newChat);
     saveAllChats();
     if (switchTo) {
@@ -515,16 +685,16 @@
     renderChatList();
     lastUserPrompt = null;
     lastUserImage = null;
-    // On mobile, close sidebar after selection
-    if (window.innerWidth <= 768) sidebar.classList.add('hidden');
+    if (window.innerWidth <= 768) {
+      sidebar.classList.add('hidden');
+      updateToggleButtonVisibility();
+    }
   }
 
   function deleteChat(chatId, event) {
     event.stopPropagation();
     if (allChats.length <= 1) return;
-
     if (!confirm('Are you sure you want to delete this chat?')) return;
-
     allChats = allChats.filter(c => c.id !== chatId);
     if (activeChatId === chatId) {
       activeChatId = allChats[0].id;
@@ -599,7 +769,7 @@
   }
 
   // ============================================================
-  // RENDERING (unchanged)
+  // RENDERING (same as before)
   // ============================================================
   function renderMessage(role, text, imageSrc = null, smoothScroll = true) {
     const div = document.createElement('div');
@@ -686,7 +856,7 @@
   }
 
   // ============================================================
-  // IMAGE HANDLING (unchanged)
+  // IMAGE HANDLING
   // ============================================================
   function handleImageSelection(event) {
     const file = event.target.files[0];
@@ -711,7 +881,7 @@
   }
 
   // ============================================================
-  // MESSAGE SENDING (unchanged)
+  // MESSAGE SENDING (original, robust)
   // ============================================================
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
@@ -804,7 +974,7 @@
   }
 
   // ============================================================
-  // THEME TOGGLE
+  // THEME
   // ============================================================
   function toggleTheme() {
     document.body.classList.toggle('light-mode');
@@ -818,14 +988,6 @@
     btn.innerHTML = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
   }
 
-  // ============================================================
-  // SIDEBAR TOGGLE
-  // ============================================================
-  function toggleSidebar() {
-    sidebar.classList.toggle('hidden');
-  }
-
-  // Load saved theme
   (function() {
     if (localStorage.getItem('vexel_theme') === 'light') {
       document.body.classList.add('light-mode');
