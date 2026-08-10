@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* ================================================================
-       🚀  FUTURISTIC ADVANCED UI – VEXEL AI (fixed)
+       🚀  FUTURISTIC ADVANCED UI – VEXEL AI (mobile‑friendly)
        ================================================================ */
     :root {
       --bg-deep: #0b0c18;
@@ -497,12 +497,81 @@
       border-radius: 10px;
     }
 
+    /* ========== MOBILE ENHANCEMENTS (larger, more readable) ========== */
     @media (max-width: 768px) {
-      .sidebar { position: absolute; left: 0; top: 0; height: 100%; z-index: 40; }
+      .sidebar { position: absolute; left: 0; top: 0; height: 100%; z-index: 40; width: 260px; }
       .sidebar.hidden { transform: translateX(-100%); }
-      .messages { padding: 1.5rem 1rem; }
-      .input-wrapper { padding: 0.5rem 1rem 1rem; }
-      .header { padding: 0.8rem 1rem; }
+
+      .header {
+        padding: 0.9rem 1.2rem;
+      }
+      .header h1 {
+        font-size: 1.4rem;
+      }
+      .header-actions button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+      }
+
+      .messages {
+        padding: 1.2rem 1rem;
+        gap: 1rem;
+      }
+      .message {
+        max-width: 90%;
+        font-size: 1rem;           /* slightly larger */
+        padding: 0.9rem 1.2rem;
+      }
+      .message-actions button {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+      }
+      .copy-code-btn {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+      }
+
+      .input-wrapper {
+        padding: 0.6rem 1rem 1rem;
+      }
+      .input-area {
+        gap: 0.5rem;
+      }
+      .attach-btn {
+        font-size: 1.1rem;
+        padding: 0 0.8rem;
+        height: 48px;
+      }
+      .input-area textarea {
+        font-size: 1rem;
+        padding: 0.8rem 1rem;
+        min-height: 48px;
+      }
+      .input-area button.send-btn {
+        padding: 0 1.2rem;
+        font-size: 0.95rem;
+        height: 48px;
+      }
+
+      .footer-note {
+        padding: 0.5rem 1rem;
+        font-size: 0.7rem;
+      }
+
+      .typing {
+        padding: 0.7rem 1.2rem;
+      }
+      .typing span {
+        width: 7px;
+        height: 7px;
+      }
+
+      .chat-list-item {
+        font-size: 0.85rem;
+      }
+      .sidebar-header h2 {
+        font-size: 1.2rem;
+      }
     }
   </style>
 </head>
@@ -724,7 +793,6 @@
   function renderAllMessages() {
     messagesDiv.innerHTML = '';
     if (chatHistory.length === 0) {
-      // Welcome message: skip action buttons
       renderMessage('assistant', '👋 Hello! I\'m Vexel. Ask me anything or upload an image.', null, false, true);
     } else {
       chatHistory.forEach(msg => {
@@ -797,7 +865,6 @@
       }
     });
 
-    // Only add action buttons if it's an assistant message AND not skipped
     if (role === 'assistant' && !skipActions) {
       const actionsDiv = document.createElement('div');
       actionsDiv.className = 'message-actions';
@@ -880,7 +947,7 @@
   }
 
   // ============================================================
-  // MESSAGE SENDING (original logic)
+  // MESSAGE SENDING (original)
   // ============================================================
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
