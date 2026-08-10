@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* ================================================================
-       🚀  VEXEL AI – FINAL MASTER UI (Sticky Copy + Sidebar Fix)
+       🚀  VEXEL AI – FINAL MASTER UI (Sidebar New Chat Button)
        ================================================================ */
     :root {
       --bg-deep: #0b0c18;
@@ -115,8 +115,13 @@
     }
 
     .sidebar-header {
-      padding: 1.5rem 1.2rem;
+      padding: 1.5rem 1.2rem 0.8rem;
       border-bottom: 1px solid var(--border-glow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .sidebar-title-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -147,22 +152,30 @@
       box-shadow: var(--neon-glow);
     }
 
+    /* New Chat Button – prominently placed */
     .new-chat-btn {
       background: var(--accent);
       border: none;
       color: white;
-      width: 36px;
-      height: 36px;
+      width: 100%;
+      padding: 0.7rem 1rem;
       border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
       cursor: pointer;
-      font-size: 1.3rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 0.4rem;
       transition: all 0.2s;
       box-shadow: var(--neon-glow);
+      margin-bottom: 0.5rem;
     }
-    .new-chat-btn:hover { background: var(--accent-bright); transform: scale(1.08); }
+    .new-chat-btn:hover {
+      background: var(--accent-bright);
+      transform: scale(1.02);
+      box-shadow: 0 0 20px rgba(138,109,255,0.8);
+    }
 
     .chat-list {
       flex: 1;
@@ -592,7 +605,7 @@
       border-radius: 10px;
     }
 
-    /* ========== MOBILE FIXES (no cut‑off) ========== */
+    /* ========== MOBILE FIXES ========== */
     @media (max-width: 768px) {
       .sidebar {
         position: absolute;
@@ -652,8 +665,14 @@
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <h2>◈ Vexel AI</h2>
-    <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close sidebar">✕</button>
+    <div class="sidebar-title-row">
+      <h2>◈ Vexel AI</h2>
+      <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close sidebar">✕</button>
+    </div>
+    <!-- PROMINENT NEW CHAT BUTTON -->
+    <button class="new-chat-btn" onclick="createNewChat()">
+      + New Chat
+    </button>
   </div>
   <div class="chat-list" id="chatList"></div>
 </div>
@@ -710,12 +729,12 @@
   const menuToggle = document.getElementById('menuToggle');
 
   let isWaiting = false;
-  let selectedImages = [];          // { mimeType, data, previewUrl }
+  let selectedImages = [];
   let allChats = [];
   let activeChatId = null;
   let chatHistory = [];
   let lastUserPrompt = null;
-  let lastUserParts = null;        // for regeneration
+  let lastUserParts = null;
   let pendingDeleteChatId = null;
 
   // ============================================================
@@ -749,27 +768,18 @@
   });
 
   function handleResponsiveSidebar() {
-    if (window.innerWidth <= 768) {
-      sidebar.classList.add('hidden');
-    } else {
-      sidebar.classList.remove('hidden');
-    }
+    if (window.innerWidth <= 768) sidebar.classList.add('hidden');
+    else sidebar.classList.remove('hidden');
     updateToggleButtonVisibility();
   }
 
   function updateToggleButtonVisibility() {
-    // Show menu toggle only when sidebar is hidden
-    if (sidebar.classList.contains('hidden')) {
-      menuToggle.classList.remove('hidden');
-    } else {
-      menuToggle.classList.add('hidden');
-    }
+    menuToggle.classList.toggle('hidden', !sidebar.classList.contains('hidden'));
   }
 
   function toggleSidebar() {
     sidebar.classList.toggle('hidden');
     updateToggleButtonVisibility();
-    // On mobile, when sidebar opens, ensure toggle hides (already done by visibility update)
   }
 
   // ============================================================
@@ -967,7 +977,6 @@
       div.innerHTML = textOrHtml.replace(/\n/g, '<br>');
     }
 
-    // Add code copy buttons (now sticky)
     div.querySelectorAll('pre').forEach(pre => {
       if (!pre.querySelector('.copy-code-btn')) {
         const btn = document.createElement('button');
@@ -1040,9 +1049,6 @@
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
 
-  // ============================================================
-  // IMAGE HANDLING (Multiple)
-  // ============================================================
   function handleImageSelection(event) {
     const files = Array.from(event.target.files);
     files.forEach(file => {
@@ -1066,9 +1072,6 @@
     fileInput.value = '';
   }
 
-  // ============================================================
-  // MESSAGE SENDING
-  // ============================================================
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
     if ((!prompt && selectedImages.length === 0 && !regenerating) || isWaiting) return;
