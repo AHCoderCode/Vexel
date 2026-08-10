@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* ================================================================
-       🧠  VEXEL AI – PROFESSIONAL DARK/LIGHT THEME + SIDEBAR + ACTIONS
+       ORIGINAL PROFESSIONAL DARK THEME (now with light mode support)
        ================================================================ */
     :root {
       --bg-primary: #1a1d27;
@@ -26,7 +26,6 @@
       --header-bg: #1f2230;
       --input-bg: #232734;
       --input-border: #2e3347;
-      --shadow: 0 4px 12px rgba(0,0,0,0.3);
       --sidebar-bg: #1a1d27;
       --sidebar-hover: #2a2d3a;
       --scrollbar-thumb: #2e3347;
@@ -49,7 +48,6 @@
       --header-bg: #ffffff;
       --input-bg: #ffffff;
       --input-border: #d5d9e2;
-      --shadow: 0 4px 12px rgba(0,0,0,0.05);
       --sidebar-bg: #f0f2f7;
       --sidebar-hover: #e2e5ee;
       --scrollbar-thumb: #c0c5d0;
@@ -75,6 +73,7 @@
       flex-direction: column;
       height: 100vh;
       flex-shrink: 0;
+      transform: translateX(0);
       transition: transform 0.3s ease;
       z-index: 20;
     }
@@ -83,7 +82,6 @@
       position: absolute;
       height: 100%;
     }
-
     .sidebar-header {
       padding: 1.5rem 1.2rem;
       border-bottom: 1px solid var(--border);
@@ -114,7 +112,6 @@
       transition: background 0.2s;
     }
     .new-chat-btn:hover { background: var(--accent-hover); }
-
     .chat-list {
       flex: 1;
       overflow-y: auto;
@@ -151,13 +148,12 @@
     }
     .chat-list-item:hover .delete-chat { opacity: 1; }
 
-    /* Main chat area */
+    /* Main chat */
     .main-area {
       flex: 1;
       display: flex;
       flex-direction: column;
       height: 100vh;
-      overflow: hidden;
     }
     .header {
       background: var(--header-bg);
@@ -183,7 +179,6 @@
       border-radius: 6px;
     }
     .menu-toggle:hover { background: var(--bg-tertiary); }
-
     .header h1 {
       font-size: 1.4rem;
       font-weight: 600;
@@ -260,7 +255,7 @@
     }
     .copy-code-btn:hover { background: var(--accent); color: white; }
 
-    /* Message action buttons */
+    /* Message actions (Copy, Regenerate, Like/Dislike) */
     .message-actions {
       display: flex;
       gap: 0.4rem;
@@ -307,7 +302,6 @@
     .image-preview-container { display: none; align-items: center; gap: 10px; padding-bottom: 0.5rem; }
     .image-preview-container img { height: 50px; border-radius: 6px; border: 1px solid var(--border); }
     .remove-image-btn { background: #ff4d4d; border: none; color: white; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
-
     .input-area { display: flex; gap: 0.8rem; align-items: flex-end; }
     .attach-btn {
       background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-secondary);
@@ -343,10 +337,10 @@
     }
   </style>
 </head>
-<body class="dark-mode"> <!-- Default dark mode -->
+<body> <!-- Default dark mode (no class) -->
 
 <!-- Sidebar -->
-<div class="sidebar hidden" id="sidebar">
+<div class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <h2>◈ Vexel AI</h2>
     <button class="new-chat-btn" onclick="createNewChat()" title="New chat">+</button>
@@ -402,19 +396,30 @@
   let currentImageMimeType = null;
 
   // Chat system
-  let allChats = [];          // array of chat objects
-  let activeChatId = null;   // current active chat ID
-  let chatHistory = [];      // current chat's message array (synced with active chat)
-  let lastUserPrompt = null; // for regeneration
-  let lastUserImage = null;  // for regeneration
+  let allChats = [];
+  let activeChatId = null;
+  let chatHistory = [];          // Messages of the active chat
+  let lastUserPrompt = null;    // For regeneration
+  let lastUserImage = null;
 
   // ============================================================
   // INITIALIZATION
   // ============================================================
   window.addEventListener('load', () => {
     loadAllChats();
-    if (!activeChatId) createNewChat(false); // create default chat if none
-    loadActiveChat();
+    if (allChats.length === 0) {
+      createNewChat(false);
+    } else {
+      // Load active chat ID from storage or first chat
+      const storedId = localStorage.getItem('vexel_activeChatId');
+      if (storedId && allChats.some(c => c.id === storedId)) {
+        activeChatId = storedId;
+      } else {
+        activeChatId = allChats[0].id;
+        localStorage.setItem('vexel_activeChatId', activeChatId);
+      }
+      loadActiveChat();
+    }
     renderChatList();
     updateThemeIcon();
     promptInput.focus();
@@ -423,7 +428,7 @@
   function loadAllChats() {
     const stored = localStorage.getItem('vexel_chats');
     if (stored) {
-      try { allChats = JSON.parse(stored); } catch(e) { allChats = []; }
+      try { allChats = JSON.parse(stored); } catch (e) { allChats = []; }
     }
   }
 
@@ -432,16 +437,6 @@
   }
 
   function loadActiveChat() {
-    const storedId = localStorage.getItem('vexel_activeChatId');
-    if (storedId && allChats.some(c => c.id === storedId)) {
-      activeChatId = storedId;
-    } else if (allChats.length > 0) {
-      activeChatId = allChats[0].id;
-      localStorage.setItem('vexel_activeChatId', activeChatId);
-    } else {
-      createNewChat(false);
-      return;
-    }
     const chat = allChats.find(c => c.id === activeChatId);
     if (chat) {
       chatHistory = chat.messages || [];
@@ -459,13 +454,17 @@
     };
     allChats.unshift(newChat);
     saveAllChats();
-    if (switchTo) switchToChat(id);
-    renderChatList();
-    return id;
+    if (switchTo) {
+      activeChatId = id;
+      localStorage.setItem('vexel_activeChatId', id);
+      chatHistory = [];
+      renderAllMessages();
+      renderChatList();
+    }
   }
 
   function switchToChat(chatId) {
-    // save current chat messages before switching
+    // Save current chat's messages before switching
     if (activeChatId) {
       const currentChat = allChats.find(c => c.id === activeChatId);
       if (currentChat) {
@@ -474,19 +473,18 @@
       }
     }
     activeChatId = chatId;
-    localStorage.setItem('vexel_activeChatId', activeChatId);
-    const chat = allChats.find(c => c.id === activeChatId);
+    localStorage.setItem('vexel_activeChatId', chatId);
+    const chat = allChats.find(c => c.id === chatId);
     chatHistory = chat ? chat.messages : [];
     renderAllMessages();
     renderChatList();
-    // reset regeneration memory
     lastUserPrompt = null;
     lastUserImage = null;
   }
 
   function deleteChat(chatId, event) {
     event.stopPropagation();
-    if (allChats.length <= 1) return; // keep at least one chat
+    if (allChats.length <= 1) return;
     allChats = allChats.filter(c => c.id !== chatId);
     if (activeChatId === chatId) {
       activeChatId = allChats[0].id;
@@ -519,7 +517,6 @@
   function renderAllMessages() {
     messagesDiv.innerHTML = '';
     if (chatHistory.length === 0) {
-      // Welcome message for empty chat
       renderMessage('assistant', '👋 Hello! I\'m Vexel. Ask me anything or upload an image.', null, false);
     } else {
       chatHistory.forEach(msg => {
@@ -532,26 +529,21 @@
       });
       setTimeout(scrollToBottom, 50);
     }
-    // Re-attach copy code buttons after rendering
-    attachCodeCopyButtons();
   }
 
   function saveCurrentChat() {
     const chat = allChats.find(c => c.id === activeChatId);
     if (chat) {
       chat.messages = chatHistory;
-      // Auto‑title from first user message
       if (chat.title === 'New Chat' && chatHistory.length > 0) {
         const firstUserMsg = chatHistory.find(m => m.role === 'user');
         if (firstUserMsg) {
           const textPart = firstUserMsg.parts.find(p => p.text);
-          if (textPart) chat.title = textPart.text.slice(0, 30);
-          else if (firstUserMsg.parts.some(p => p.inline_data)) chat.title = 'Image Chat';
-          saveAllChats();
-          renderChatList();
+          chat.title = textPart ? textPart.text.slice(0, 30) : 'Image Chat';
         }
       }
       saveAllChats();
+      renderChatList();
     }
   }
 
@@ -566,7 +558,7 @@
   }
 
   // ============================================================
-  // RENDERING HELPERS
+  // RENDERING
   // ============================================================
   function renderMessage(role, text, imageSrc = null, smoothScroll = true) {
     const div = document.createElement('div');
@@ -580,66 +572,8 @@
     }
     div.innerHTML = contentHtml;
 
-    // Add action buttons for assistant messages
-    if (role === 'assistant') {
-      const actionsDiv = document.createElement('div');
-      actionsDiv.className = 'message-actions';
-      // Copy whole text
-      const copyBtn = document.createElement('button');
-      copyBtn.innerHTML = '📋 Copy';
-      copyBtn.title = 'Copy message';
-      copyBtn.onclick = () => {
-        navigator.clipboard.writeText(text).then(() => {
-          copyBtn.textContent = '✅ Copied';
-          setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
-        });
-      };
-      // Regenerate
-      const regenBtn = document.createElement('button');
-      regenBtn.innerHTML = '🔄 Regenerate';
-      regenBtn.title = 'Regenerate response';
-      regenBtn.onclick = () => regenerateResponse();
-      // Like / Dislike
-      const likeBtn = document.createElement('button');
-      likeBtn.className = 'like-btn';
-      likeBtn.innerHTML = '👍';
-      likeBtn.onclick = () => toggleFeedback('like', likeBtn);
-      const dislikeBtn = document.createElement('button');
-      dislikeBtn.className = 'dislike-btn';
-      dislikeBtn.innerHTML = '👎';
-      dislikeBtn.onclick = () => toggleFeedback('dislike', dislikeBtn);
-
-      actionsDiv.appendChild(copyBtn);
-      actionsDiv.appendChild(regenBtn);
-      actionsDiv.appendChild(likeBtn);
-      actionsDiv.appendChild(dislikeBtn);
-      div.appendChild(actionsDiv);
-    }
-
-    messagesDiv.appendChild(div);
-    if (smoothScroll) scrollToBottom();
-    attachCodeCopyButtonsInElement(div);
-  }
-
-  function attachCodeCopyButtonsInElement(container) {
-    container.querySelectorAll('pre').forEach(pre => {
-      if (pre.querySelector('.copy-code-btn')) return;
-      const btn = document.createElement('button');
-      btn.className = 'copy-code-btn';
-      btn.innerText = 'Copy';
-      btn.onclick = () => {
-        const code = pre.querySelector('code')?.innerText || '';
-        navigator.clipboard.writeText(code).then(() => {
-          btn.innerText = 'Copied!';
-          setTimeout(() => btn.innerText = 'Copy', 2000);
-        });
-      };
-      pre.appendChild(btn);
-    });
-  }
-
-  function attachCodeCopyButtons() {
-    document.querySelectorAll('.message pre').forEach(pre => {
+    // Add code copy buttons
+    div.querySelectorAll('pre').forEach(pre => {
       if (!pre.querySelector('.copy-code-btn')) {
         const btn = document.createElement('button');
         btn.className = 'copy-code-btn';
@@ -654,6 +588,44 @@
         pre.appendChild(btn);
       }
     });
+
+    // Add action buttons for assistant messages
+    if (role === 'assistant') {
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'message-actions';
+      
+      const copyBtn = document.createElement('button');
+      copyBtn.innerHTML = '📋 Copy';
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(text).then(() => {
+          copyBtn.textContent = '✅ Copied';
+          setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
+        });
+      };
+
+      const regenBtn = document.createElement('button');
+      regenBtn.innerHTML = '🔄 Regenerate';
+      regenBtn.onclick = () => regenerateResponse();
+
+      const likeBtn = document.createElement('button');
+      likeBtn.className = 'like-btn';
+      likeBtn.innerHTML = '👍';
+      likeBtn.onclick = () => toggleFeedback('like', likeBtn);
+
+      const dislikeBtn = document.createElement('button');
+      dislikeBtn.className = 'dislike-btn';
+      dislikeBtn.innerHTML = '👎';
+      dislikeBtn.onclick = () => toggleFeedback('dislike', dislikeBtn);
+
+      actionsDiv.appendChild(copyBtn);
+      actionsDiv.appendChild(regenBtn);
+      actionsDiv.appendChild(likeBtn);
+      actionsDiv.appendChild(dislikeBtn);
+      div.appendChild(actionsDiv);
+    }
+
+    messagesDiv.appendChild(div);
+    if (smoothScroll) scrollToBottom();
   }
 
   function showTyping() {
@@ -675,7 +647,7 @@
   }
 
   // ============================================================
-  // IMAGE HANDLING
+  // IMAGE HANDLING (unchanged)
   // ============================================================
   function handleImageSelection(event) {
     const file = event.target.files[0];
@@ -700,7 +672,7 @@
   }
 
   // ============================================================
-  // MESSAGE SENDING & REGENERATION
+  // MESSAGE SENDING (original logic, enhanced with regeneration)
   // ============================================================
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
@@ -710,79 +682,39 @@
     sendBtn.disabled = true;
     promptInput.disabled = true;
 
-    let userPromptText = prompt;
-    let userImageData = null;
-
+    // Store user parts temporarily
+    const userParts = [];
     if (!regenerating) {
-      // Normal send: capture user input
-      userImageData = currentImageBase64 ? { mimeType: currentImageMimeType, data: currentImageBase64 } : null;
+      const userText = prompt;
+      const imageData = currentImageBase64 ? { mimeType: currentImageMimeType, data: currentImageBase64 } : null;
+      if (userText) userParts.push({ text: userText });
+      if (imageData) userParts.push({ inline_data: { mime_type: imageData.mimeType, data: imageData.data } });
+      
+      // Show user message immediately
       renderMessage('user', prompt, imagePreview.src);
-      // Add user message to history
-      const userParts = [];
-      if (prompt) userParts.push({ text: prompt });
-      if (userImageData) userParts.push({ inline_data: { mime_type: userImageData.mimeType, data: userImageData.data } });
-      chatHistory.push({ role: 'user', parts: userParts });
-      saveCurrentChat();
+      // Clean input
+      promptInput.value = '';
+      promptInput.style.height = 'auto';
+      removeImage();
       lastUserPrompt = prompt;
-      lastUserImage = userImageData;
+      lastUserImage = imageData;
     } else {
-      // Regenerating: reuse last prompt and image, remove last assistant msg
+      // Regenerating: reuse lastUserPrompt/Image
       if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'model') {
         chatHistory.pop();
         saveCurrentChat();
-        // Remove the last assistant message from DOM
-        const lastAssistantMsg = messagesDiv.querySelector('.message.assistant:last-child');
-        if (lastAssistantMsg) lastAssistantMsg.remove();
+        const lastAssistant = messagesDiv.querySelector('.message.assistant:last-child');
+        if (lastAssistant) lastAssistant.remove();
       }
-      userPromptText = lastUserPrompt || '';
-      userImageData = lastUserImage;
     }
 
-    // Cleanup input
-    promptInput.value = '';
-    promptInput.style.height = 'auto';
-    removeImage();
     showTyping();
 
+    // Prepare payload for backend (exactly as original)
     const payload = {
-      prompt: userPromptText,
-      history: chatHistory, // already includes the user message, but backend will append it again? careful.
-      // We need to send history WITHOUT the latest user message if we already added it. Let's handle: the backend receives history array and adds the current prompt. So we should send history excluding the last user turn we just added.
-      // So for normal send, we don't want to duplicate. We'll send history without the last item if we already added it.
-      // We'll just send the raw chatHistory as is (including the user message we just pushed) and let the backend append again? That would duplicate. To fix, we'll not push to chatHistory before API call; instead push after success.
-      // Rethinking: The original code added user to history after API success. That avoids duplication. Let's follow that pattern.
-      // But we need to show user message immediately. So we'll keep a temporary copy of the user parts, add to chatHistory only after API success.
-      // So revert: do not push to chatHistory yet. Instead, store the userParts and add after success.
-      // But for regeneration, we already removed the last assistant from history, so we need to resend without adding user again.
-      // Let's simplify: In sendMessage, we'll prepare the final history array to send to API, without modifying chatHistory yet.
-      // We'll use a copy: const historyToSend = [...chatHistory]. Then after success, we'll update chatHistory.
-    };
-
-    // Adjust payload: The backend expects history array (previous turns) and will then add the current prompt as a new user turn.
-    // So we should send chatHistory without the latest user message (if we already added it). Better: don't push to chatHistory until after success.
-    // Let's change the flow:
-    // - Save user parts temporarily.
-    // - Show user message visually.
-    // - After API success, push user parts to chatHistory, then push model response.
-    // - For regeneration, we just resend the same user parts (from lastUserPrompt/Image) and after success, push new model response.
-    // This avoids duplication.
-    // Let's implement that.
-
-    // We'll store userParts before clearing.
-    const userParts = [];
-    if (userPromptText) userParts.push({ text: userPromptText });
-    if (userImageData) userParts.push({ inline_data: { mime_type: userImageData.mimeType, data: userImageData.data } });
-
-    // Build history to send: current chatHistory (which should NOT include the new user turn yet)
-    const historyToSend = [...chatHistory];
-    // If regenerating, we already removed the last model response, so historyToSend ends with the user turn. That's correct.
-    // If normal send, we need to append the new user turn to historyToSend (but we don't want to modify chatHistory yet). So we'll add it to a copy.
-    const finalHistory = regenerating ? historyToSend : [...historyToSend, { role: 'user', parts: userParts }];
-
-    const payload = {
-      prompt: userPromptText,
-      history: finalHistory,
-      image: userImageData ? { mimeType: userImageData.mimeType, data: userImageData.data } : null
+      prompt: regenerating ? (lastUserPrompt || '') : prompt,
+      history: regenerating ? chatHistory : [...chatHistory, { role: 'user', parts: userParts }],
+      image: regenerating ? lastUserImage : (currentImageBase64 ? { mimeType: currentImageMimeType, data: currentImageBase64 } : null)
     };
 
     try {
@@ -803,7 +735,7 @@
         const reply = data.candidates[0].content.parts[0].text;
         renderMessage('assistant', reply);
 
-        // Update chatHistory: if normal send, push user parts then model parts; if regenerating, only push model parts
+        // Update chatHistory
         if (!regenerating) {
           chatHistory.push({ role: 'user', parts: userParts });
         }
@@ -825,20 +757,17 @@
   }
 
   function regenerateResponse() {
-    if (!lastUserPrompt && !lastUserImage) return;
     sendMessage(true);
   }
 
-  // Feedback (like/dislike)
+  // Feedback
   function toggleFeedback(type, button) {
     button.classList.toggle(type === 'like' ? 'liked' : 'disliked');
-    // store in localStorage: vexel_feedback
     const feedback = JSON.parse(localStorage.getItem('vexel_feedback') || '{}');
     const msgIndex = Array.from(document.querySelectorAll('.message.assistant')).indexOf(button.closest('.message'));
     const key = `${activeChatId}_${msgIndex}`;
-    feedback[key] = feedback[key] === type ? null : type; // toggle off if same
+    feedback[key] = feedback[key] === type ? null : type;
     localStorage.setItem('vexel_feedback', JSON.stringify(feedback));
-    // reset other button if any
     const sibling = type === 'like' ? button.nextElementSibling : button.previousElementSibling;
     if (sibling) sibling.classList.remove('liked', 'disliked');
   }
@@ -849,16 +778,13 @@
   function toggleTheme() {
     document.body.classList.toggle('light-mode');
     updateThemeIcon();
+    localStorage.setItem('vexel_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
   }
 
   function updateThemeIcon() {
     const btn = document.querySelector('.theme-btn');
     if (!btn) return;
-    if (document.body.classList.contains('light-mode')) {
-      btn.innerHTML = '☀️';
-    } else {
-      btn.innerHTML = '🌙';
-    }
+    btn.innerHTML = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
   }
 
   // ============================================================
@@ -868,25 +794,19 @@
     sidebar.classList.toggle('hidden');
   }
 
+  // Load saved theme
+  (function() {
+    if (localStorage.getItem('vexel_theme') === 'light') {
+      document.body.classList.add('light-mode');
+    }
+    updateThemeIcon();
+  })();
+
   // Auto-resize textarea
   promptInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 140) + 'px';
   });
-
-  // Load theme preference
-  (function() {
-    const savedTheme = localStorage.getItem('vexel_theme');
-    if (savedTheme === 'light') document.body.classList.add('light-mode');
-    else document.body.classList.remove('light-mode');
-    updateThemeIcon();
-  })();
-
-  // Save theme preference on toggle
-  const observer = new MutationObserver(() => {
-    localStorage.setItem('vexel_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-  });
-  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 </script>
 </body>
 </html>
