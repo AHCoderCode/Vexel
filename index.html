@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Vexel AI</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* ================================================================
-       🚀  FUTURISTIC ADVANCED UI – VEXEL AI
+       🚀  FUTURISTIC ADVANCED UI – VEXEL AI (fixed)
        ================================================================ */
     :root {
       --bg-deep: #0b0c18;
@@ -339,7 +339,7 @@
     }
     .copy-code-btn:hover { background: var(--accent-bright); }
 
-    /* Message actions */
+    /* Message actions – hidden for welcome message via skipActions */
     .message-actions {
       display: flex;
       gap: 0.4rem;
@@ -549,7 +549,7 @@
 
 <script>
   // ============================================================
-  // STATE MANAGEMENT (same reliable logic)
+  // STATE MANAGEMENT (unchanged)
   // ============================================================
   const messagesDiv = document.getElementById('messages');
   const promptInput = document.getElementById('promptInput');
@@ -613,14 +613,12 @@
 
   function updateToggleButtonVisibility() {
     if (window.innerWidth <= 768) {
-      // Mobile: menu toggle in header only when sidebar hidden
       if (sidebar.classList.contains('hidden')) {
         menuToggle.classList.remove('hidden');
       } else {
         menuToggle.classList.add('hidden');
       }
     } else {
-      // Desktop: always show header toggle? Better to hide when sidebar visible, show when hidden.
       if (sidebar.classList.contains('hidden')) {
         menuToggle.classList.remove('hidden');
       } else {
@@ -633,7 +631,6 @@
     sidebar.classList.toggle('hidden');
     updateToggleButtonVisibility();
     if (window.innerWidth <= 768 && !sidebar.classList.contains('hidden')) {
-      // Sidebar opened on mobile, ensure header toggle hides
       menuToggle.classList.add('hidden');
     }
   }
@@ -727,7 +724,8 @@
   function renderAllMessages() {
     messagesDiv.innerHTML = '';
     if (chatHistory.length === 0) {
-      renderMessage('assistant', '👋 Hello! I\'m Vexel. Ask me anything or upload an image.', null, false);
+      // Welcome message: skip action buttons
+      renderMessage('assistant', '👋 Hello! I\'m Vexel. Ask me anything or upload an image.', null, false, true);
     } else {
       chatHistory.forEach(msg => {
         const role = msg.role === 'model' ? 'assistant' : 'user';
@@ -762,16 +760,16 @@
     if (isWaiting) return;
     chatHistory = [];
     messagesDiv.innerHTML = '';
-    renderMessage('assistant', '✨ Conversation cleared. Ask me anything!', null, false);
+    renderMessage('assistant', '✨ Conversation cleared. Ask me anything!', null, false, true);
     saveCurrentChat();
     lastUserPrompt = null;
     lastUserImage = null;
   }
 
   // ============================================================
-  // RENDERING (same as before)
+  // RENDERING (with skipActions parameter)
   // ============================================================
-  function renderMessage(role, text, imageSrc = null, smoothScroll = true) {
+  function renderMessage(role, text, imageSrc = null, smoothScroll = true, skipActions = false) {
     const div = document.createElement('div');
     div.className = `message ${role}`;
     let contentHtml = '';
@@ -799,7 +797,8 @@
       }
     });
 
-    if (role === 'assistant') {
+    // Only add action buttons if it's an assistant message AND not skipped
+    if (role === 'assistant' && !skipActions) {
       const actionsDiv = document.createElement('div');
       actionsDiv.className = 'message-actions';
       
@@ -881,7 +880,7 @@
   }
 
   // ============================================================
-  // MESSAGE SENDING (original, robust)
+  // MESSAGE SENDING (original logic)
   // ============================================================
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
