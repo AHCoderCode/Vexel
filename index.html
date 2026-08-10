@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* ================================================================
-       🚀  VEXEL AI – COMPLETE MASTER UI (Mobile Fixed + All Features)
+       🚀  VEXEL AI – FINAL MASTER UI (Sticky Copy + Sidebar Fix)
        ================================================================ */
     :root {
       --bg-deep: #0b0c18;
@@ -128,6 +128,25 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    .close-sidebar-btn {
+      background: none;
+      border: 1px solid var(--border-glow);
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-sidebar-btn:hover {
+      background: var(--accent);
+      color: white;
+      box-shadow: var(--neon-glow);
+    }
+
     .new-chat-btn {
       background: var(--accent);
       border: none;
@@ -327,11 +346,21 @@
       position: relative;
     }
     .message code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
+    /* STICKY COPY BUTTON */
     .copy-code-btn {
-      position: absolute; top: 8px; right: 8px;
-      background: var(--accent); border: none;
-      color: white; padding: 0.3rem 0.6rem; border-radius: 6px;
-      font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+      position: sticky;
+      top: 8px;
+      right: 8px;
+      float: right;
+      z-index: 5;
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
       box-shadow: 0 0 8px rgba(138,109,255,0.6);
     }
     .copy-code-btn:hover { background: var(--accent-bright); }
@@ -563,7 +592,7 @@
       border-radius: 10px;
     }
 
-    /* ========== MOBILE FIXES (no cut‑off, everything visible) ========== */
+    /* ========== MOBILE FIXES (no cut‑off) ========== */
     @media (max-width: 768px) {
       .sidebar {
         position: absolute;
@@ -624,7 +653,7 @@
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <h2>◈ Vexel AI</h2>
-    <button class="new-chat-btn" onclick="createNewChat()" title="New chat">+</button>
+    <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close sidebar">✕</button>
   </div>
   <div class="chat-list" id="chatList"></div>
 </div>
@@ -720,22 +749,27 @@
   });
 
   function handleResponsiveSidebar() {
-    if (window.innerWidth <= 768) sidebar.classList.add('hidden');
-    else sidebar.classList.remove('hidden');
+    if (window.innerWidth <= 768) {
+      sidebar.classList.add('hidden');
+    } else {
+      sidebar.classList.remove('hidden');
+    }
     updateToggleButtonVisibility();
   }
 
   function updateToggleButtonVisibility() {
-    if (window.innerWidth <= 768) {
-      menuToggle.classList.toggle('hidden', !sidebar.classList.contains('hidden'));
+    // Show menu toggle only when sidebar is hidden
+    if (sidebar.classList.contains('hidden')) {
+      menuToggle.classList.remove('hidden');
     } else {
-      menuToggle.classList.toggle('hidden', !sidebar.classList.contains('hidden'));
+      menuToggle.classList.add('hidden');
     }
   }
 
   function toggleSidebar() {
     sidebar.classList.toggle('hidden');
     updateToggleButtonVisibility();
+    // On mobile, when sidebar opens, ensure toggle hides (already done by visibility update)
   }
 
   // ============================================================
@@ -758,7 +792,6 @@
       chatHistory = chat.messages || [];
       renderAllMessages();
     }
-    // load draft for this chat
     loadDraft(activeChatId);
   }
 
@@ -768,14 +801,14 @@
     allChats.unshift(newChat);
     saveAllChats();
     if (switchTo) {
-      saveDraft(activeChatId); // save current draft before switching
+      saveDraft(activeChatId);
       activeChatId = id;
       localStorage.setItem('vexel_activeChatId', id);
       chatHistory = [];
       renderAllMessages();
       renderChatList();
       clearDraftUI();
-      loadDraft(activeChatId); // fresh draft (empty)
+      loadDraft(activeChatId);
     }
   }
 
@@ -818,11 +851,10 @@
     if (activeChatId === pendingDeleteChatId) {
       activeChatId = allChats[0].id;
       localStorage.setItem('vexel_activeChatId', activeChatId);
-      // also remove draft
       localStorage.removeItem(`vexel_draft_${pendingDeleteChatId}`);
     }
     saveAllChats();
-    loadActiveChat();  // will load the new active chat
+    loadActiveChat();
     renderChatList();
     closeDeleteModal();
   }
@@ -894,7 +926,6 @@
       thumb.innerHTML = `<img src="${img.previewUrl}" /><button class="remove-thumb" data-index="${index}">✕</button>`;
       imagePreviewsContainer.appendChild(thumb);
     });
-    // Add remove event listeners
     imagePreviewsContainer.querySelectorAll('.remove-thumb').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -916,12 +947,10 @@
         const textPart = msg.parts.find(p => p.text);
         const imageParts = msg.parts.filter(p => p.inline_data);
         let text = textPart ? textPart.text : '';
-        // Build image HTML from history
         let imageHtml = '';
         imageParts.forEach(part => {
           imageHtml += `<img src="data:${part.inline_data.mime_type};base64,${part.inline_data.data}" class="chat-img" />`;
         });
-        // If there's no text but images, still render
         const content = imageHtml ? (text + imageHtml) : text;
         renderMessage(role, content, null, false);
       });
@@ -935,13 +964,10 @@
     if (role === 'assistant') {
       div.innerHTML = marked.parse(textOrHtml);
     } else {
-      // For user messages, textOrHtml may contain HTML if images are included from history
-      // but normally we pass plain text; we'll handle combined content in the renderAllMessages logic.
-      // For simplicity, we'll insert directly.
       div.innerHTML = textOrHtml.replace(/\n/g, '<br>');
     }
 
-    // Add code copy buttons to pre tags
+    // Add code copy buttons (now sticky)
     div.querySelectorAll('pre').forEach(pre => {
       if (!pre.querySelector('.copy-code-btn')) {
         const btn = document.createElement('button');
@@ -1037,7 +1063,7 @@
       };
       reader.readAsDataURL(file);
     });
-    fileInput.value = ''; // allow re-selecting the same files
+    fileInput.value = '';
   }
 
   // ============================================================
@@ -1058,7 +1084,6 @@
         userParts.push({ inline_data: { mime_type: img.mimeType, data: img.data } });
       });
 
-      // Show user message (with images)
       let combinedHtml = prompt ? prompt.replace(/\n/g, '<br>') : '';
       selectedImages.forEach(img => {
         combinedHtml += `<img src="${img.previewUrl}" class="chat-img" />`;
@@ -1068,20 +1093,17 @@
       promptInput.value = '';
       selectedImages = [];
       renderImagePreviews();
-      // Clear draft
       clearDraftUI();
-      saveDraft(activeChatId); // save empty draft
+      saveDraft(activeChatId);
       lastUserPrompt = prompt;
       lastUserParts = userParts;
     } else {
-      // Regenerate: remove last assistant message from history and DOM
       if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'model') {
         chatHistory.pop();
         saveCurrentChat();
         const lastAssistant = messagesDiv.querySelector('.message.assistant:last-child');
         if (lastAssistant) lastAssistant.remove();
       }
-      // No need to modify user input; use stored lastUserParts
     }
 
     showTyping();
@@ -1114,7 +1136,7 @@
         if (!regenerating) chatHistory.push({ role: 'user', parts: userParts });
         chatHistory.push({ role: 'model', parts: [{ text: reply }] });
         saveCurrentChat();
-        renderChatList(); // update title if needed
+        renderChatList();
       } else {
         renderMessage('assistant', '❌ Unexpected response format.');
       }
@@ -1161,9 +1183,6 @@
     lastUserParts = null;
   }
 
-  // ============================================================
-  // FEEDBACK
-  // ============================================================
   function toggleFeedback(type, button) {
     button.classList.toggle(type === 'like' ? 'liked' : 'disliked');
     const feedback = JSON.parse(localStorage.getItem('vexel_feedback') || '{}');
@@ -1175,9 +1194,6 @@
     if (sibling) sibling.classList.remove('liked', 'disliked');
   }
 
-  // ============================================================
-  // THEME
-  // ============================================================
   function toggleTheme() {
     document.body.classList.toggle('light-mode');
     updateThemeIcon();
@@ -1195,7 +1211,6 @@
     updateThemeIcon();
   })();
 
-  // Auto-resize textarea
   promptInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 140) + 'px';
