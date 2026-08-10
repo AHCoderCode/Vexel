@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* ================================================================
-       ORIGINAL PROFESSIONAL DARK THEME (now with light mode support)
+       PROFESSIONAL DARK/LIGHT THEME – VEXEL AI
        ================================================================ */
     :root {
       --bg-primary: #1a1d27;
@@ -73,7 +73,6 @@
       flex-direction: column;
       height: 100vh;
       flex-shrink: 0;
-      transform: translateX(0);
       transition: transform 0.3s ease;
       z-index: 20;
     }
@@ -255,7 +254,7 @@
     }
     .copy-code-btn:hover { background: var(--accent); color: white; }
 
-    /* Message actions (Copy, Regenerate, Like/Dislike) */
+    /* Message actions */
     .message-actions {
       display: flex;
       gap: 0.4rem;
@@ -337,7 +336,7 @@
     }
   </style>
 </head>
-<body> <!-- Default dark mode (no class) -->
+<body>
 
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
@@ -395,22 +394,23 @@
   let currentImageBase64 = null;
   let currentImageMimeType = null;
 
-  // Chat system
   let allChats = [];
   let activeChatId = null;
-  let chatHistory = [];          // Messages of the active chat
-  let lastUserPrompt = null;    // For regeneration
+  let chatHistory = [];
+  let lastUserPrompt = null;
   let lastUserImage = null;
 
   // ============================================================
-  // INITIALIZATION
+  // INITIALIZATION (FIXED)
   // ============================================================
   window.addEventListener('load', () => {
     loadAllChats();
+
     if (allChats.length === 0) {
-      createNewChat(false);
+      // No chats at all – create one and make it active
+      createNewChat(true);
     } else {
-      // Load active chat ID from storage or first chat
+      // Load the last active chat or the first one
       const storedId = localStorage.getItem('vexel_activeChatId');
       if (storedId && allChats.some(c => c.id === storedId)) {
         activeChatId = storedId;
@@ -420,6 +420,7 @@
       }
       loadActiveChat();
     }
+
     renderChatList();
     updateThemeIcon();
     promptInput.focus();
@@ -464,7 +465,7 @@
   }
 
   function switchToChat(chatId) {
-    // Save current chat's messages before switching
+    // Save current chat before switching
     if (activeChatId) {
       const currentChat = allChats.find(c => c.id === activeChatId);
       if (currentChat) {
@@ -474,9 +475,7 @@
     }
     activeChatId = chatId;
     localStorage.setItem('vexel_activeChatId', chatId);
-    const chat = allChats.find(c => c.id === chatId);
-    chatHistory = chat ? chat.messages : [];
-    renderAllMessages();
+    loadActiveChat();
     renderChatList();
     lastUserPrompt = null;
     lastUserImage = null;
@@ -484,7 +483,7 @@
 
   function deleteChat(chatId, event) {
     event.stopPropagation();
-    if (allChats.length <= 1) return;
+    if (allChats.length <= 1) return; // keep at least one
     allChats = allChats.filter(c => c.id !== chatId);
     if (activeChatId === chatId) {
       activeChatId = allChats[0].id;
@@ -532,6 +531,7 @@
   }
 
   function saveCurrentChat() {
+    if (!activeChatId) return; // safety check
     const chat = allChats.find(c => c.id === activeChatId);
     if (chat) {
       chat.messages = chatHistory;
@@ -572,7 +572,7 @@
     }
     div.innerHTML = contentHtml;
 
-    // Add code copy buttons
+    // Code block copy buttons
     div.querySelectorAll('pre').forEach(pre => {
       if (!pre.querySelector('.copy-code-btn')) {
         const btn = document.createElement('button');
@@ -589,7 +589,7 @@
       }
     });
 
-    // Add action buttons for assistant messages
+    // Action buttons for assistant messages
     if (role === 'assistant') {
       const actionsDiv = document.createElement('div');
       actionsDiv.className = 'message-actions';
@@ -647,7 +647,7 @@
   }
 
   // ============================================================
-  // IMAGE HANDLING (unchanged)
+  // IMAGE HANDLING
   // ============================================================
   function handleImageSelection(event) {
     const file = event.target.files[0];
@@ -672,7 +672,7 @@
   }
 
   // ============================================================
-  // MESSAGE SENDING (original logic, enhanced with regeneration)
+  // MESSAGE SENDING (original logic, added regeneration)
   // ============================================================
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
@@ -682,7 +682,6 @@
     sendBtn.disabled = true;
     promptInput.disabled = true;
 
-    // Store user parts temporarily
     const userParts = [];
     if (!regenerating) {
       const userText = prompt;
@@ -690,16 +689,13 @@
       if (userText) userParts.push({ text: userText });
       if (imageData) userParts.push({ inline_data: { mime_type: imageData.mimeType, data: imageData.data } });
       
-      // Show user message immediately
       renderMessage('user', prompt, imagePreview.src);
-      // Clean input
       promptInput.value = '';
       promptInput.style.height = 'auto';
       removeImage();
       lastUserPrompt = prompt;
       lastUserImage = imageData;
     } else {
-      // Regenerating: reuse lastUserPrompt/Image
       if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'model') {
         chatHistory.pop();
         saveCurrentChat();
@@ -710,7 +706,6 @@
 
     showTyping();
 
-    // Prepare payload for backend (exactly as original)
     const payload = {
       prompt: regenerating ? (lastUserPrompt || '') : prompt,
       history: regenerating ? chatHistory : [...chatHistory, { role: 'user', parts: userParts }],
@@ -730,18 +725,16 @@
       if (!res.ok || data.error) {
         const errorMsg = data.error?.message || JSON.stringify(data, null, 2);
         renderMessage('assistant', `⚠️ **API Error:**\n${errorMsg}\n\n*Your chat history is preserved.*`);
-        // Do not update history on error
       } else if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
         const reply = data.candidates[0].content.parts[0].text;
         renderMessage('assistant', reply);
 
-        // Update chatHistory
         if (!regenerating) {
           chatHistory.push({ role: 'user', parts: userParts });
         }
         chatHistory.push({ role: 'model', parts: [{ text: reply }] });
         saveCurrentChat();
-        renderChatList(); // update title
+        renderChatList();
       } else {
         renderMessage('assistant', '❌ Unexpected response format.');
       }
@@ -760,7 +753,6 @@
     sendMessage(true);
   }
 
-  // Feedback
   function toggleFeedback(type, button) {
     button.classList.toggle(type === 'like' ? 'liked' : 'disliked');
     const feedback = JSON.parse(localStorage.getItem('vexel_feedback') || '{}');
