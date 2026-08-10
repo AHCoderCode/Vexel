@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* ================================================================
-       🚀  FUTURISTIC ADVANCED UI – VEXEL AI (mobile‑friendly)
+       🚀  FUTURISTIC ADVANCED UI – VEXEL AI (mobile‑fixed)
        ================================================================ */
     :root {
       --bg-deep: #0b0c18;
@@ -59,6 +59,8 @@
       overflow: hidden;
       transition: background 0.4s, color 0.4s;
       position: relative;
+      width: 100%;
+      min-width: 0; /* allow flex children to shrink */
     }
 
     /* Animated background gradient orbs */
@@ -216,6 +218,7 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
+      min-width: 0; /* prevent overflow */
       position: relative;
     }
     .header {
@@ -229,11 +232,13 @@
       align-items: center;
       flex-shrink: 0;
       box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+      min-width: 0;
     }
     .header-left {
       display: flex;
       align-items: center;
       gap: 1rem;
+      min-width: 0;
     }
     .menu-toggle {
       background: none;
@@ -244,6 +249,7 @@
       padding: 0.3rem 0.6rem;
       border-radius: 8px;
       transition: all 0.2s;
+      flex-shrink: 0;
     }
     .menu-toggle:hover {
       background: var(--accent);
@@ -261,17 +267,24 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-shadow: 0 0 8px rgba(138,109,255,0.5);
+      white-space: nowrap;
+    }
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
     }
     .header-actions button {
       background: rgba(22,24,45,0.6);
       border: 1px solid var(--border-glow);
       color: var(--text-secondary);
-      padding: 0.5rem 1rem;
+      padding: 0.5rem 0.8rem;
       border-radius: 10px;
       cursor: pointer;
       font-size: 0.85rem;
       transition: all 0.2s;
       backdrop-filter: blur(5px);
+      white-space: nowrap;
     }
     .header-actions button:hover {
       background: var(--accent);
@@ -290,6 +303,7 @@
       gap: 1.5rem;
       background: transparent;
       scroll-behavior: smooth;
+      min-width: 0;
     }
     .message {
       max-width: 75%;
@@ -339,7 +353,6 @@
     }
     .copy-code-btn:hover { background: var(--accent-bright); }
 
-    /* Message actions – hidden for welcome message via skipActions */
     .message-actions {
       display: flex;
       gap: 0.4rem;
@@ -410,6 +423,7 @@
       padding: 0.8rem 2.5rem 1.5rem;
       flex-shrink: 0;
       backdrop-filter: blur(8px);
+      min-width: 0;
     }
     .image-preview-container { display: none; align-items: center; gap: 10px; padding-bottom: 0.5rem; }
     .image-preview-container img { height: 50px; border-radius: 8px; border: 1px solid var(--accent); }
@@ -426,7 +440,12 @@
       align-items: center;
       justify-content: center;
     }
-    .input-area { display: flex; gap: 0.8rem; align-items: flex-end; }
+    .input-area {
+      display: flex;
+      gap: 0.8rem;
+      align-items: flex-end;
+      min-width: 0;
+    }
     .attach-btn {
       background: var(--input-bg);
       border: 1px solid var(--border-glow);
@@ -438,6 +457,7 @@
       height: 52px;
       transition: all 0.2s;
       backdrop-filter: blur(5px);
+      flex-shrink: 0;
     }
     .attach-btn:hover { border-color: var(--accent); color: var(--accent-bright); }
     .input-area textarea {
@@ -455,6 +475,7 @@
       min-height: 52px;
       max-height: 140px;
       backdrop-filter: blur(5px);
+      min-width: 0;  /* allow shrinking */
     }
     .input-area textarea:focus {
       border-color: var(--accent-bright);
@@ -472,6 +493,7 @@
       height: 52px;
       transition: all 0.2s;
       box-shadow: var(--neon-glow);
+      flex-shrink: 0;
     }
     .input-area button.send-btn:hover {
       background: var(--accent-bright);
@@ -497,19 +519,31 @@
       border-radius: 10px;
     }
 
-    /* ========== MOBILE ENHANCEMENTS (larger, more readable) ========== */
+    /* ========== MOBILE (fixed to prevent any overflow) ========== */
     @media (max-width: 768px) {
-      .sidebar { position: absolute; left: 0; top: 0; height: 100%; z-index: 40; width: 260px; }
+      .sidebar { 
+        position: absolute; left: 0; top: 0; height: 100%; z-index: 40; 
+        width: min(260px, 80vw); /* ensure it doesn't overflow */
+      }
       .sidebar.hidden { transform: translateX(-100%); }
 
       .header {
-        padding: 0.9rem 1.2rem;
+        padding: 0.9rem 1rem;
+        gap: 0.5rem;
+      }
+      .header-left {
+        gap: 0.5rem;
+        flex: 1;
+        min-width: 0;
       }
       .header h1 {
         font-size: 1.4rem;
       }
+      .header-actions {
+        gap: 0.3rem;
+      }
       .header-actions button {
-        padding: 0.4rem 0.8rem;
+        padding: 0.4rem 0.7rem;
         font-size: 0.8rem;
       }
 
@@ -518,8 +552,8 @@
         gap: 1rem;
       }
       .message {
-        max-width: 90%;
-        font-size: 1rem;           /* slightly larger */
+        max-width: 95%;
+        font-size: 1rem;
         padding: 0.9rem 1.2rem;
       }
       .message-actions button {
@@ -532,29 +566,31 @@
       }
 
       .input-wrapper {
-        padding: 0.6rem 1rem 1rem;
+        padding: 0.6rem 0.8rem 0.8rem;
       }
       .input-area {
         gap: 0.5rem;
+        align-items: flex-end;
       }
       .attach-btn {
         font-size: 1.1rem;
-        padding: 0 0.8rem;
-        height: 48px;
+        padding: 0 0.6rem;
+        height: 44px;
       }
       .input-area textarea {
         font-size: 1rem;
-        padding: 0.8rem 1rem;
-        min-height: 48px;
+        padding: 0.7rem 0.9rem;
+        min-height: 44px;
+        flex: 1 1 auto; /* allow shrinking */
       }
       .input-area button.send-btn {
-        padding: 0 1.2rem;
-        font-size: 0.95rem;
-        height: 48px;
+        padding: 0 1rem;
+        font-size: 0.9rem;
+        height: 44px;
       }
 
       .footer-note {
-        padding: 0.5rem 1rem;
+        padding: 0.5rem 0.5rem;
         font-size: 0.7rem;
       }
 
@@ -682,17 +718,9 @@
 
   function updateToggleButtonVisibility() {
     if (window.innerWidth <= 768) {
-      if (sidebar.classList.contains('hidden')) {
-        menuToggle.classList.remove('hidden');
-      } else {
-        menuToggle.classList.add('hidden');
-      }
+      menuToggle.classList.toggle('hidden', !sidebar.classList.contains('hidden'));
     } else {
-      if (sidebar.classList.contains('hidden')) {
-        menuToggle.classList.remove('hidden');
-      } else {
-        menuToggle.classList.add('hidden');
-      }
+      menuToggle.classList.toggle('hidden', !sidebar.classList.contains('hidden'));
     }
   }
 
@@ -834,9 +862,6 @@
     lastUserImage = null;
   }
 
-  // ============================================================
-  // RENDERING (with skipActions parameter)
-  // ============================================================
   function renderMessage(role, text, imageSrc = null, smoothScroll = true, skipActions = false) {
     const div = document.createElement('div');
     div.className = `message ${role}`;
@@ -921,9 +946,6 @@
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
 
-  // ============================================================
-  // IMAGE HANDLING
-  // ============================================================
   function handleImageSelection(event) {
     const file = event.target.files[0];
     if (file) {
@@ -946,9 +968,6 @@
     currentImageMimeType = null;
   }
 
-  // ============================================================
-  // MESSAGE SENDING (original)
-  // ============================================================
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
     if ((!prompt && !currentImageBase64 && !regenerating) || isWaiting) return;
@@ -1039,9 +1058,6 @@
     if (sibling) sibling.classList.remove('liked', 'disliked');
   }
 
-  // ============================================================
-  // THEME
-  // ============================================================
   function toggleTheme() {
     document.body.classList.toggle('light-mode');
     updateThemeIcon();
