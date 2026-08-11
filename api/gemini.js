@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) return res.status(500).json({ error: { message: 'Server configuration error' } });
 
-  const MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
 
   try {
     // Build parts for the current user message
