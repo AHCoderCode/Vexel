@@ -749,7 +749,6 @@
     selectedChats.clear();
     renderChatList();
     updateBulkDeleteButton();
-    // Remove any existing confirmation button
     const existing = document.getElementById('bulkDeleteConfirm');
     if (existing) existing.remove();
   }
@@ -783,7 +782,6 @@
   }
 
   function updateBulkDeleteButton() {
-    // Remove any existing confirm button
     const existing = document.getElementById('bulkDeleteConfirm');
     if (existing) existing.remove();
     if (!isBulkMode || selectedChats.size === 0) return;
@@ -796,7 +794,7 @@
       bulkDeleteModalText.textContent = `Are you sure you want to delete ${selectedChats.size} chats?`;
       bulkDeleteModal.classList.add('active');
     };
-    chatListEl.appendChild(btn);  // attach to chat list so it stays inside sidebar scroll
+    chatListEl.appendChild(btn);
   }
 
   function closeBulkDeleteModal() {
@@ -806,7 +804,6 @@
   function executeBulkDelete() {
     const ids = Array.from(selectedChats);
     ids.forEach(id => {
-      // Already PIN‑verified if locked
       allChats = allChats.filter(c => c.id !== id);
       if (activeChatId === id) {
         activeChatId = allChats[0]?.id;
@@ -822,7 +819,7 @@
     renderChatList();
     updateBulkDeleteButton();
     closeBulkDeleteModal();
-    toggleBulkMode(); // exit bulk mode
+    toggleBulkMode();
   }
 
   function renderChatList(filteredChats = null) {
@@ -860,7 +857,6 @@
       item.querySelector('.rename-btn').addEventListener('click', (e) => renameChat(chat.id, e));
       chatListEl.appendChild(item);
     });
-    // Re‑attach any existing bulk delete button if needed
     if (isBulkMode && selectedChats.size > 0) {
       updateBulkDeleteButton();
     }
@@ -1015,7 +1011,7 @@
     renderImagePreviews();
   }
 
-  // ========== RENDERING + Typewriter effect ==========
+  // ========== RENDERING (NO TYPEWRITER) ==========
   function renderImagePreviews() {
     imagePreviewsContainer.innerHTML = '';
     selectedImages.forEach((img, index) => {
@@ -1047,64 +1043,194 @@
     }
   }
 
-  // Typewriter function
-  function typeWriter(element, text, speed = 10, callback = null) {
-    let i = 0;
-    element.innerHTML = ''; // clear initial content
-    function type() {
-      if (i < text.length) {
-        element.innerHTML = marked.parse(text.substring(0, i + 1));
-        // Re‑render KaTeX dynamically
-        renderMathInElement(element, {
-          delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '$', right: '$', display: false},
-            {left: '\\(', right: '\\)', display: false},
-            {left: '\\[', right: '\\]', display: true}
-          ],
-          throwOnError: false
-        });
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        i++;
-        setTimeout(type, speed);
-      } else {
-        if (callback) callback();
-      }
-    }
-    type();
-  }
-
   function renderMessage(role, content, unused, smoothScroll = true, skipActions = false, skipTypewriter = false) {
-  const div = document.createElement('div');
-  div.className = `message ${role}`;
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
 
-  if (role === 'assistant') {
-    // Instantly render full message – no typewriter delay
-    div.innerHTML = marked.parse(content);
-    // Render KaTeX for math formulas
-    renderMathInElement(div, {
-      delimiters: [
-        {left: '$$', right: '$$', display: true},
-        {left: '$', right: '$', display: false},
-        {left: '\\(', right: '\\)', display: false},
-        {left: '\\[', right: '\\]', display: true}
-      ],
-      throwOnError: false
-    });
-    // Attach code copy buttons
-    attachCodeCopyButtons(div);
-    // Add action buttons (Copy, Regenerate, Like/Dislike)
-    if (!skipActions) addMessageActions(div, content, false);
-  } else {
-    // User message
-    div.innerHTML = content.replace(/\n/g, '<br>');
+    if (role === 'assistant') {
+      // Instantly render full message – no typewriter delay
+      div.innerHTML = marked.parse(content);
+      // Render KaTeX for math formulas
+      renderMathInElement(div, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+      });
+      // Attach code copy buttons
+      attachCodeCopyButtons(div);
+      // Add action buttons (Copy, Regenerate, Like/Dislike)
+      if (!skipActions) addMessageActions(div, content, false);
+    } else {
+      // User message
+      div.innerHTML = content.replace(/\n/g, '<br>');
+    }
+
+    messagesDiv.appendChild(div);
+    if (smoothScroll) messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
 
-  messagesDiv.appendChild(div);
-  if (smoothScroll) messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-  // ========== IMAGE / PDF / VOICE / CAMERA / CROP (unchanged) ==========
-  // ... all previous functions remain exactly the same (handleImageSelection, handlePDFSelection, startVoiceInput, openCamera, capturePhoto, closeCamera, openCropModal, applyCrop, cancelCrop) ...
+  function addMessageActions(div, content, skipActions) {
+    if (skipActions) return;
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'message-actions';
+    const copyBtn = document.createElement('button'); copyBtn.innerHTML = '📋 Copy'; copyBtn.onclick = () => { navigator.clipboard.writeText(content); copyBtn.textContent = '✅ Copied'; setTimeout(() => copyBtn.textContent = '📋 Copy', 2000); };
+    const regenBtn = document.createElement('button'); regenBtn.innerHTML = '🔄 Regenerate'; regenBtn.onclick = () => regenerateResponse();
+    const likeBtn = document.createElement('button'); likeBtn.className = 'like-btn'; likeBtn.innerHTML = '👍'; likeBtn.onclick = () => toggleFeedback('like', likeBtn);
+    const dislikeBtn = document.createElement('button'); dislikeBtn.className = 'dislike-btn'; dislikeBtn.innerHTML = '👎'; dislikeBtn.onclick = () => toggleFeedback('dislike', dislikeBtn);
+    actionsDiv.appendChild(copyBtn); actionsDiv.appendChild(regenBtn); actionsDiv.appendChild(likeBtn); actionsDiv.appendChild(dislikeBtn);
+    div.appendChild(actionsDiv);
+  }
+
+  function attachCodeCopyButtons(container) {
+    container.querySelectorAll('pre').forEach(pre => {
+      if (!pre.querySelector('.copy-code-btn')) {
+        const btn = document.createElement('button');
+        btn.className = 'copy-code-btn';
+        btn.innerText = 'Copy';
+        btn.onclick = () => {
+          navigator.clipboard.writeText(pre.querySelector('code')?.innerText || '');
+          btn.innerText = 'Copied!';
+          setTimeout(() => btn.innerText = 'Copy', 2000);
+        };
+        pre.insertBefore(btn, pre.firstChild);
+      }
+    });
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'typing';
+    div.id = 'typingIndicator';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    messagesDiv.appendChild(div);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+  function removeTyping() { document.getElementById('typingIndicator')?.remove(); }
+
+  // ========== IMAGE / PDF / VOICE / CAMERA / CROP ==========
+  function handleImageSelection(event) {
+    const files = Array.from(event.target.files);
+    files.forEach(file => {
+      if (selectedImages.length >= 4) { alert('Max 4 images'); return; }
+      const reader = new FileReader();
+      reader.onload = e => {
+        const base64 = e.target.result.split(',')[1];
+        selectedImages.push({ mimeType: file.type, data: base64, previewUrl: e.target.result, id: Date.now()+Math.random() });
+        renderImagePreviews();
+        saveDraft(activeChatId);
+      };
+      reader.readAsDataURL(file);
+    });
+    imageInput.value = '';
+  }
+
+  async function handlePDFSelection(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        fullText += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      promptInput.value = promptInput.value + '\n\n[PDF Content]:\n' + fullText.slice(0,5000);
+    } catch(e) { alert('Failed to extract PDF text.'); }
+    pdfInput.value = '';
+  }
+
+  function startVoiceInput() {
+    if (!recognition) return;
+    if (isRecording) { recognition.stop(); return; }
+    isRecording = true;
+    micMenuItem.querySelector('.icon').textContent = '🎙️';
+    recognition.start();
+  }
+
+  function stopRecordingUI() {
+    isRecording = false;
+    const el = document.getElementById('micMenuItem');
+    if (el) el.querySelector('.icon').textContent = '🎤';
+  }
+
+  async function openCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      cameraStream = stream;
+      document.getElementById('cameraVideo').srcObject = stream;
+      document.getElementById('cameraModal').classList.add('active');
+    } catch (err) { alert('Camera access denied.'); }
+  }
+
+  function toggleTorch() {
+    if (!cameraStream) return;
+    const track = cameraStream.getVideoTracks()[0];
+    if (!track) return;
+    if ('torch' in track.getCapabilities()) {
+      track.applyConstraints({ advanced: [{ torch: !track.getSettings().torch }] });
+      torchBtn.textContent = track.getSettings().torch ? '💡✅' : '💡';
+    } else {
+      alert('Torch not supported.');
+    }
+  }
+
+  function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg');
+    if (selectedImages.length >= 4) { alert('Max 4 images'); closeCamera(); return; }
+    selectedImages.push({ mimeType: 'image/jpeg', data: dataUrl.split(',')[1], previewUrl: dataUrl, id: Date.now()+Math.random() });
+    renderImagePreviews();
+    saveDraft(activeChatId);
+    closeCamera();
+  }
+
+  function closeCamera() {
+    if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; }
+    document.getElementById('cameraModal').classList.remove('active');
+  }
+
+  function openCropModal(index) {
+    currentCropIndex = index;
+    const img = selectedImages[index];
+    document.getElementById('cropImage').src = img.previewUrl;
+    document.getElementById('cropModal').classList.add('active');
+    if (cropper) cropper.destroy();
+    cropper = new Cropper(document.getElementById('cropImage'), {
+      aspectRatio: NaN, viewMode: 1, autoCropArea: 0.8, responsive: true, background: false,
+      zoomable: true, rotatable: true, scalable: true
+    });
+  }
+
+  function applyCrop() {
+    if (!cropper || currentCropIndex === null) return;
+    const canvas = cropper.getCroppedCanvas();
+    const dataUrl = canvas.toDataURL(selectedImages[currentCropIndex].mimeType);
+    selectedImages[currentCropIndex].data = dataUrl.split(',')[1];
+    selectedImages[currentCropIndex].previewUrl = dataUrl;
+    cropper.destroy();
+    cropper = null;
+    document.getElementById('cropModal').classList.remove('active');
+    renderImagePreviews();
+    saveDraft(activeChatId);
+  }
+
+  function cancelCrop() {
+    if (cropper) cropper.destroy();
+    cropper = null;
+    document.getElementById('cropModal').classList.remove('active');
+    currentCropIndex = null;
+  }
 
   // ========== IMAGE GENERATION ==========
   async function generateImage() {
@@ -1225,7 +1351,6 @@
         renderMessage('assistant', `⚠️ **API Error:**\n${data.error?.message || JSON.stringify(data)}`, null, false, false, true);
       } else if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
         const reply = data.candidates[0].content.parts[0].text;
-        // Render with typewriter effect
         renderMessage('assistant', reply, null, true, false, false);
         if (!regenerating) chatHistory.push({ role: 'user', parts: userParts });
         chatHistory.push({ role: 'model', parts: [{ text: reply }] });
@@ -1304,138 +1429,7 @@
     this.style.height = Math.min(this.scrollHeight, 140) + 'px';
     if (!isIncognito && activeChatId) saveDraft(activeChatId);
   });
-
-  // ========== REMINDER: The following functions must be present in your final code ==========
-  // handleImageSelection, handlePDFSelection, startVoiceInput, openCamera, capturePhoto, closeCamera, openCropModal, applyCrop, cancelCrop
-  // They are identical to your previous stable version. Please paste them here.
-  // I'm omitting them for brevity but they are required for the full functionality.
-    // ========== IMAGE SELECTION ==========
-  function handleImageSelection(event) {
-    const files = Array.from(event.target.files);
-    files.forEach(file => {
-      if (selectedImages.length >= 4) { alert('Max 4 images'); return; }
-      const reader = new FileReader();
-      reader.onload = e => {
-        const base64 = e.target.result.split(',')[1];
-        selectedImages.push({ mimeType: file.type, data: base64, previewUrl: e.target.result, id: Date.now()+Math.random() });
-        renderImagePreviews();
-        saveDraft(activeChatId);
-      };
-      reader.readAsDataURL(file);
-    });
-    imageInput.value = '';
-  }
-
-  // ========== PDF HANDLING ==========
-  async function handlePDFSelection(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let fullText = '';
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        fullText += content.items.map(item => item.str).join(' ') + '\n';
-      }
-      promptInput.value = promptInput.value + '\n\n[PDF Content]:\n' + fullText.slice(0,5000);
-    } catch(e) { alert('Failed to extract PDF text.'); }
-    pdfInput.value = '';
-  }
-
-  // ========== VOICE INPUT ==========
-  function startVoiceInput() {
-    if (!recognition) return;
-    if (isRecording) { recognition.stop(); return; }
-    isRecording = true;
-    micMenuItem.querySelector('.icon').textContent = '🎙️';
-    recognition.start();
-  }
-
-  function stopRecordingUI() {
-    isRecording = false;
-    const el = document.getElementById('micMenuItem');
-    if (el) el.querySelector('.icon').textContent = '🎤';
-  }
-
-  // ========== CAMERA ==========
-  async function openCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-      cameraStream = stream;
-      document.getElementById('cameraVideo').srcObject = stream;
-      document.getElementById('cameraModal').classList.add('active');
-    } catch (err) { alert('Camera access denied.'); }
-  }
-
-  function toggleTorch() {
-    if (!cameraStream) return;
-    const track = cameraStream.getVideoTracks()[0];
-    if (!track) return;
-    if ('torch' in track.getCapabilities()) {
-      track.applyConstraints({ advanced: [{ torch: !track.getSettings().torch }] });
-      torchBtn.textContent = track.getSettings().torch ? '💡✅' : '💡';
-    } else {
-      alert('Torch not supported.');
-    }
-  }
-
-  function capturePhoto() {
-    const video = document.getElementById('cameraVideo');
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg');
-    if (selectedImages.length >= 4) { alert('Max 4 images'); closeCamera(); return; }
-    selectedImages.push({ mimeType: 'image/jpeg', data: dataUrl.split(',')[1], previewUrl: dataUrl, id: Date.now()+Math.random() });
-    renderImagePreviews();
-    saveDraft(activeChatId);
-    closeCamera();
-  }
-
-  function closeCamera() {
-    if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; }
-    document.getElementById('cameraModal').classList.remove('active');
-  }
-
-  // ========== IMAGE CROP ==========
-  function openCropModal(index) {
-    currentCropIndex = index;
-    const img = selectedImages[index];
-    document.getElementById('cropImage').src = img.previewUrl;
-    document.getElementById('cropModal').classList.add('active');
-    if (cropper) cropper.destroy();
-    cropper = new Cropper(document.getElementById('cropImage'), {
-      aspectRatio: NaN, viewMode: 1, autoCropArea: 0.8, responsive: true, background: false,
-      zoomable: true, rotatable: true, scalable: true
-    });
-  }
-
-  function applyCrop() {
-    if (!cropper || currentCropIndex === null) return;
-    const canvas = cropper.getCroppedCanvas();
-    const dataUrl = canvas.toDataURL(selectedImages[currentCropIndex].mimeType);
-    selectedImages[currentCropIndex].data = dataUrl.split(',')[1];
-    selectedImages[currentCropIndex].previewUrl = dataUrl;
-    cropper.destroy();
-    cropper = null;
-    document.getElementById('cropModal').classList.remove('active');
-    renderImagePreviews();
-    saveDraft(activeChatId);
-  }
-
-  function cancelCrop() {
-    if (cropper) cropper.destroy();
-    cropper = null;
-    document.getElementById('cropModal').classList.remove('active');
-    currentCropIndex = null;
-  }
 </script>
-</body>
-</html>
 
 
 
