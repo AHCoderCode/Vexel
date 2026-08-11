@@ -1079,21 +1079,9 @@
   div.className = `message ${role}`;
 
   if (role === 'assistant') {
+    // Instantly render full message – no typewriter delay
     div.innerHTML = marked.parse(content);
-  } else {
-    div.innerHTML = content.replace(/\n/g, '<br>');
-  }
-
-  // Attach code copy buttons (works for all messages)
-  attachCodeCopyButtons(div);
-
-  // Add action buttons (copy, regenerate, like, dislike) for assistant messages
-  if (role === 'assistant' && !skipActions) {
-    addMessageActions(div, content, false);
-  }
-
-  // Render KaTeX for math formulas (only assistant messages)
-  if (role === 'assistant') {
+    // Render KaTeX for math formulas
     renderMathInElement(div, {
       delimiters: [
         {left: '$$', right: '$$', display: true},
@@ -1103,68 +1091,17 @@
       ],
       throwOnError: false
     });
+    // Attach code copy buttons
+    attachCodeCopyButtons(div);
+    // Add action buttons (Copy, Regenerate, Like/Dislike)
+    if (!skipActions) addMessageActions(div, content, false);
+  } else {
+    // User message
+    div.innerHTML = content.replace(/\n/g, '<br>');
   }
 
   messagesDiv.appendChild(div);
   if (smoothScroll) messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-function addMessageActions(div, content, skipActions) {
-  if (skipActions) return;
-  const actionsDiv = document.createElement('div');
-  actionsDiv.className = 'message-actions';
-  const copyBtn = document.createElement('button');
-  copyBtn.innerHTML = '📋 Copy';
-  copyBtn.onclick = () => {
-    navigator.clipboard.writeText(content);
-    copyBtn.textContent = '✅ Copied';
-    setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
-  };
-  const regenBtn = document.createElement('button');
-  regenBtn.innerHTML = '🔄 Regenerate';
-  regenBtn.onclick = () => regenerateResponse();
-  const likeBtn = document.createElement('button');
-  likeBtn.className = 'like-btn';
-  likeBtn.innerHTML = '👍';
-  likeBtn.onclick = () => toggleFeedback('like', likeBtn);
-  const dislikeBtn = document.createElement('button');
-  dislikeBtn.className = 'dislike-btn';
-  dislikeBtn.innerHTML = '👎';
-  dislikeBtn.onclick = () => toggleFeedback('dislike', dislikeBtn);
-  actionsDiv.appendChild(copyBtn);
-  actionsDiv.appendChild(regenBtn);
-  actionsDiv.appendChild(likeBtn);
-  actionsDiv.appendChild(dislikeBtn);
-  div.appendChild(actionsDiv);
-}
-
-function attachCodeCopyButtons(container) {
-  container.querySelectorAll('pre').forEach(pre => {
-    if (!pre.querySelector('.copy-code-btn')) {
-      const btn = document.createElement('button');
-      btn.className = 'copy-code-btn';
-      btn.innerText = 'Copy';
-      btn.onclick = () => {
-        navigator.clipboard.writeText(pre.querySelector('code')?.innerText || '');
-        btn.innerText = 'Copied!';
-        setTimeout(() => btn.innerText = 'Copy', 2000);
-      };
-      pre.insertBefore(btn, pre.firstChild);
-    }
-  });
-}
-
-function showTyping() {
-  const div = document.createElement('div');
-  div.className = 'typing';
-  div.id = 'typingIndicator';
-  div.innerHTML = '<span></span><span></span><span></span>';
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-function removeTyping() {
-  document.getElementById('typingIndicator')?.remove();
 }
   // ========== IMAGE / PDF / VOICE / CAMERA / CROP (unchanged) ==========
   // ... all previous functions remain exactly the same (handleImageSelection, handlePDFSelection, startVoiceInput, openCamera, capturePhoto, closeCamera, openCropModal, applyCrop, cancelCrop) ...
