@@ -6,13 +6,9 @@
   <title>Vexel AI</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <!-- Cropper.js -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <style>
-    /* ================================================================
-       🚀  VEXEL AI – GRANDMASTER UI (Voice, Camera, Crop, Incognito)
-       ================================================================ */
     :root {
       --bg-deep: #0b0c18;
       --bg-glass: rgba(18, 20, 42, 0.7);
@@ -31,7 +27,6 @@
       --neon-glow: 0 0 15px rgba(138, 109, 255, 0.5);
       --incognito-color: #b366ff;
     }
-
     body.light-mode {
       --bg-deep: #f4f6ff;
       --bg-glass: rgba(255,255,255,0.7);
@@ -49,8 +44,7 @@
       --scroll-thumb: #b0acd5;
       --neon-glow: 0 0 12px rgba(108, 92, 231, 0.4);
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background: var(--bg-deep);
@@ -61,33 +55,19 @@
       transition: background 0.4s, color 0.4s;
       position: relative;
       width: 100vw;
-      min-width: 0;
     }
-
-    /* Animated orbs */
+    body::before, body::after { /* orbs unchanged */ }
     body::before {
-      content: '';
-      position: absolute;
-      width: 600px;
-      height: 600px;
+      content: ''; position: absolute; width: 600px; height: 600px;
       background: radial-gradient(circle, rgba(138,109,255,0.15) 0%, transparent 70%);
-      top: -200px;
-      left: -200px;
-      border-radius: 50%;
-      animation: floatOrb 12s ease-in-out infinite;
-      pointer-events: none;
+      top: -200px; left: -200px; border-radius: 50%;
+      animation: floatOrb 12s ease-in-out infinite; pointer-events: none;
     }
     body::after {
-      content: '';
-      position: absolute;
-      width: 500px;
-      height: 500px;
+      content: ''; position: absolute; width: 500px; height: 500px;
       background: radial-gradient(circle, rgba(180,140,255,0.1) 0%, transparent 70%);
-      bottom: -150px;
-      right: -150px;
-      border-radius: 50%;
-      animation: floatOrb 15s ease-in-out infinite reverse;
-      pointer-events: none;
+      bottom: -150px; right: -150px; border-radius: 50%;
+      animation: floatOrb 15s ease-in-out infinite reverse; pointer-events: none;
     }
     @keyframes floatOrb {
       0%,100% { transform: translate(0,0) scale(1); }
@@ -95,6 +75,30 @@
       50% { transform: translate(-30px,30px) scale(0.9); }
       75% { transform: translate(-30px,-30px) scale(1.05); }
     }
+
+    /* ---------- Buttons improvement (global) ---------- */
+    button {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .neon-btn {
+      background: linear-gradient(135deg, #8a6dff, #a78bfa);
+      border: none;
+      color: white;
+      border-radius: 12px;
+      font-weight: 600;
+      box-shadow: 0 0 15px rgba(138,109,255,0.5);
+      padding: 0.7rem 1.5rem;
+      font-size: 0.95rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .neon-btn:hover {
+      box-shadow: 0 0 25px rgba(138,109,255,0.8);
+      transform: translateY(-2px);
+    }
+    .neon-btn:active { transform: scale(0.97); }
 
     /* Sidebar */
     .sidebar {
@@ -110,7 +114,7 @@
       backdrop-filter: blur(16px);
       box-shadow: 4px 0 30px rgba(0,0,0,0.5), var(--neon-glow);
     }
-    .sidebar.hidden { transform: translateX(-100%); position: absolute; height: 100%; }
+    .sidebar.hidden { transform: translateX(-100%); position: absolute; }
     .sidebar-header {
       padding: 1.5rem 1.2rem 0.8rem;
       border-bottom: 1px solid var(--border-glow);
@@ -128,34 +132,61 @@
     .close-sidebar-btn {
       background: none; border: 1px solid var(--border-glow);
       color: var(--text-secondary); font-size: 1.2rem;
-      padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer;
+      padding: 0.3rem 0.6rem; border-radius: 8px;
     }
     .close-sidebar-btn:hover { background: var(--accent); color: white; }
     .new-chat-btn {
-      background: var(--accent); border: none; color: white;
-      padding: 0.7rem 1rem; border-radius: 12px; font-weight: 600;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      gap: 0.4rem; box-shadow: var(--neon-glow); width: 100%;
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.7rem 1rem;
+      border-radius: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      box-shadow: 0 0 15px rgba(138,109,255,0.6);
+      width: 100%;
     }
+    .new-chat-btn:hover { background: var(--accent-bright); box-shadow: 0 0 25px rgba(138,109,255,0.9); }
     .sidebar-tools { display: flex; gap: 0.5rem; align-items: center; }
     .incognito-toggle {
-      background: rgba(22,24,45,0.6); border: 1px solid var(--border-glow);
-      color: var(--text-secondary); padding: 0.4rem 0.8rem; border-radius: 8px;
-      cursor: pointer; font-size: 0.9rem; display: flex; align-items: center;
-      gap: 0.3rem; transition: all 0.2s;
+      background: rgba(22,24,45,0.6);
+      border: 1px solid var(--border-glow);
+      color: var(--text-secondary);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s;
     }
     .incognito-toggle.active { background: var(--incognito-color); border-color: var(--incognito-color); color: white; }
     .search-box {
-      width: 100%; padding: 0.5rem 0.8rem; background: var(--input-bg);
-      border: 1px solid var(--border-glow); border-radius: 10px;
-      color: var(--text-primary); font-size: 0.85rem; outline: none;
+      width: 100%;
+      padding: 0.5rem 0.8rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border-glow);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      outline: none;
     }
     .chat-list { flex: 1; overflow-y: auto; padding: 0.5rem; }
     .chat-list-item {
-      padding: 0.8rem 1rem; border-radius: 12px; cursor: pointer;
-      color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.25rem;
-      display: flex; justify-content: space-between; align-items: center;
-      border: 1px solid transparent; transition: all 0.2s;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid transparent;
+      transition: all 0.2s;
     }
     .chat-list-item:hover { background: rgba(138,109,255,0.15); border-color: var(--border-glow); }
     .chat-list-item.active { background: rgba(138,109,255,0.2); border-color: var(--accent); color: white; }
@@ -175,7 +206,7 @@
     .menu-toggle {
       background: none; border: 1px solid var(--border-glow);
       color: var(--text-secondary); font-size: 1.3rem;
-      padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer;
+      padding: 0.3rem 0.6rem; border-radius: 8px;
     }
     .menu-toggle:hover { background: var(--accent); color: white; }
     .menu-toggle.hidden { display: none; }
@@ -185,12 +216,21 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .header-actions button {
-      background: rgba(22,24,45,0.6); border: 1px solid var(--border-glow);
-      color: var(--text-secondary); padding: 0.5rem 0.8rem; border-radius: 10px;
-      cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+      background: rgba(22,24,45,0.6);
+      border: 1px solid var(--border-glow);
+      color: var(--text-secondary);
+      padding: 0.5rem 0.8rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      transition: all 0.2s;
       white-space: nowrap;
     }
-    .header-actions button:hover { background: var(--accent); border-color: var(--accent-bright); color: white; }
+    .header-actions button:hover {
+      background: var(--accent);
+      border-color: var(--accent-bright);
+      color: white;
+      box-shadow: 0 0 12px rgba(138,109,255,0.6);
+    }
     .theme-btn { font-size: 1.2rem; padding: 0.4rem 0.8rem; }
 
     .messages {
@@ -202,13 +242,22 @@
       max-width: 75%; padding: 1rem 1.5rem; border-radius: 20px;
       line-height: 1.6; word-wrap: break-word; font-size: 0.95rem;
       animation: fadeInUp 0.3s ease; position: relative;
-      backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 10px var(--border-glow);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 10px var(--border-glow);
       border: 1px solid var(--border-glow);
     }
     .message.user { align-self: flex-end; background: var(--user-bg); color: white; border-bottom-right-radius: 6px; }
     .message.assistant { align-self: flex-start; background: var(--assistant-bg); color: var(--text-primary); border-bottom-left-radius: 6px; }
-    .message img.chat-img { max-width: 100%; border-radius: 10px; margin: 0.5rem 0; max-height: 300px; object-fit: cover; display: block; }
-    .message pre { background: rgba(0,0,0,0.35); padding: 2.5rem 0.8rem 0.8rem; border-radius: 10px; overflow-x: auto; margin: 0.5rem 0; border: 1px solid var(--border-glow); position: relative; }
+    .message img.chat-img {
+      max-width: 100%; border-radius: 10px; margin: 0.5rem 0; max-height: 300px;
+      object-fit: cover; display: block; cursor: pointer; transition: transform 0.2s;
+    }
+    .message img.chat-img:hover { transform: scale(1.02); }
+    .message pre {
+      background: rgba(0,0,0,0.35); padding: 2.5rem 0.8rem 0.8rem;
+      border-radius: 10px; overflow-x: auto; margin: 0.5rem 0;
+      border: 1px solid var(--border-glow); position: relative;
+    }
     .message code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
     .copy-code-btn {
       position: sticky; top: 8px; right: 8px; float: right; z-index: 5;
@@ -227,7 +276,10 @@
       color: var(--text-secondary); padding: 0.3rem 0.7rem; border-radius: 8px;
       font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
     }
-    .message-actions button:hover { background: var(--accent); border-color: var(--accent-bright); color: white; }
+    .message-actions button:hover {
+      background: var(--accent); border-color: var(--accent-bright);
+      color: white; box-shadow: 0 0 8px rgba(138,109,255,0.6);
+    }
     .like-btn.liked, .dislike-btn.disliked { background: var(--accent); color: white; border-color: var(--accent-bright); }
 
     .typing { align-self: flex-start; background: var(--assistant-bg); border: 1px solid var(--border-glow); padding: 0.8rem 1.5rem; border-radius: 16px 16px 16px 4px; display: flex; gap: 0.3rem; }
@@ -238,30 +290,48 @@
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
     .input-wrapper {
-      border-top: 1px solid var(--border-glow); padding: 0.8rem 2.5rem 1.5rem;
-      background: transparent; backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border-glow);
+      padding: 0.8rem 2.5rem 1.5rem;
+      background: transparent;
+      backdrop-filter: blur(8px);
     }
     .image-previews { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 0.5rem; }
     .preview-thumb {
       position: relative; width: 56px; height: 56px; border-radius: 8px;
-      border: 1px solid var(--accent); overflow: hidden; cursor: pointer;
+      border: 2px solid var(--accent); overflow: hidden; cursor: pointer;
+      box-shadow: 0 0 10px rgba(138,109,255,0.4);
     }
     .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .preview-thumb .remove-thumb {
       position: absolute; top: -4px; right: -4px; background: #ff4d4d;
       color: white; border: none; width: 18px; height: 18px; border-radius: 50%;
-      font-size: 10px; cursor: pointer; display: flex; align-items: center;
-      justify-content: center;
+      font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
     .input-area { display: flex; gap: 0.5rem; align-items: flex-end; }
     .tool-btn {
-      background: var(--input-bg); border: 1px solid var(--border-glow);
-      color: var(--text-secondary); font-size: 1.2rem; padding: 0 0.8rem;
-      border-radius: 14px; cursor: pointer; height: 52px; transition: all 0.2s;
+      background: linear-gradient(135deg, #2b3148, #1e2230);
+      border: 1px solid var(--accent);
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      padding: 0 0.8rem;
+      border-radius: 14px;
+      cursor: pointer;
+      height: 52px;
+      transition: all 0.2s;
+      box-shadow: 0 0 8px rgba(138,109,255,0.3);
       flex-shrink: 0;
     }
-    .tool-btn:hover { border-color: var(--accent); color: var(--accent-bright); }
-    .tool-btn.recording { background: #ff4444; border-color: #ff4444; color: white; animation: pulse 1s infinite; }
+    .tool-btn:hover {
+      border-color: var(--accent-bright);
+      color: white;
+      background: linear-gradient(135deg, #3b3f5c, #2b3148);
+      box-shadow: 0 0 15px rgba(138,109,255,0.6);
+    }
+    .tool-btn.recording {
+      background: #ff4444; border-color: #ff4444; color: white;
+      animation: pulse 1s infinite;
+      box-shadow: 0 0 15px rgba(255,68,68,0.6);
+    }
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,68,68,0.6); } 70% { box-shadow: 0 0 0 10px rgba(255,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(255,68,68,0); } }
     .input-area textarea {
       flex: 1; padding: 0.9rem 1.2rem; background: var(--input-bg);
@@ -269,12 +339,20 @@
       color: var(--text-primary); resize: none; outline: none;
       min-height: 52px; max-height: 140px; font-size: 0.95rem;
     }
+    .input-area textarea:focus { border-color: var(--accent-bright); box-shadow: 0 0 12px rgba(138,109,255,0.4); }
     .send-btn {
-      background: var(--accent); border: none; color: white;
-      padding: 0 1.8rem; border-radius: 14px; height: 52px;
-      font-weight: 600; cursor: pointer; box-shadow: var(--neon-glow);
+      background: linear-gradient(135deg, #8a6dff, #a78bfa);
+      border: none; color: white; padding: 0 1.8rem; border-radius: 14px;
+      height: 52px; font-weight: 600; font-size: 0.95rem;
+      box-shadow: 0 0 15px rgba(138,109,255,0.5);
+      transition: all 0.2s;
     }
-    .send-btn:disabled { opacity: 0.5; pointer-events: none; }
+    .send-btn:hover {
+      background: linear-gradient(135deg, #9b7efc, #b590ff);
+      box-shadow: 0 0 25px rgba(138,109,255,0.8);
+      transform: translateY(-2px);
+    }
+    .send-btn:disabled { opacity: 0.6; pointer-events: none; }
 
     .footer-note {
       padding: 0.6rem 2.5rem; text-align: center; font-size: 0.75rem;
@@ -321,6 +399,18 @@
     }
     video { width: 100%; max-width: 400px; border-radius: 10px; }
     .camera-buttons { margin-top: 1rem; display: flex; gap: 1rem; }
+
+    /* Lightbox for full image view */
+    .lightbox-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.9); z-index:200;
+      display: flex; align-items: center; justify-content: center;
+      cursor: zoom-out;
+    }
+    .lightbox-overlay img {
+      max-width: 90vw; max-height: 90vh; border-radius: 12px;
+      box-shadow: 0 0 30px rgba(138,109,255,0.5);
+    }
 
     @media (max-width: 768px) {
       .sidebar { position: absolute; left: 0; top: 0; height: 100%; z-index: 40; width: min(260px, 80vw); }
@@ -369,9 +459,7 @@
 <!-- Crop Modal -->
 <div class="modal-overlay" id="cropModal">
   <div class="crop-modal-content">
-    <div class="crop-container">
-      <img id="cropImage" />
-    </div>
+    <div class="crop-container"><img id="cropImage" /></div>
     <div class="crop-buttons">
       <button onclick="cancelCrop()">Cancel</button>
       <button onclick="applyCrop()">Crop & Save</button>
@@ -388,6 +476,11 @@
       <button onclick="capturePhoto()">📸 Capture</button>
     </div>
   </div>
+</div>
+
+<!-- Lightbox for full-size image -->
+<div id="lightbox" class="lightbox-overlay" style="display:none" onclick="this.style.display='none'">
+  <img id="lightboxImg" src="" />
 </div>
 
 <!-- Main Chat -->
@@ -420,7 +513,6 @@
 </div>
 
 <script>
-  // PDF.js worker
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
   // DOM refs
@@ -437,9 +529,11 @@
   const menuToggle = document.getElementById('menuToggle');
   const mainHeader = document.getElementById('mainHeader');
   const incognitoToggle = document.getElementById('incognitoToggle');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
 
   let isWaiting = false;
-  let selectedImages = [];          // { mimeType, data, previewUrl, id }
+  let selectedImages = [];
   let allChats = [];
   let activeChatId = null;
   let chatHistory = [];
@@ -449,13 +543,11 @@
   let isIncognito = false;
   let recognition = null;
   let isRecording = false;
-  let currentCropIndex = null;     // index of image being cropped
+  let currentCropIndex = null;
   let cropper = null;
   let cameraStream = null;
 
-  // ============================================================
   // INIT
-  // ============================================================
   window.addEventListener('load', () => {
     loadAllChats();
     if (allChats.length === 0) {
@@ -482,7 +574,6 @@
 
     document.getElementById('confirmDeleteBtn').addEventListener('click', executeDelete);
 
-    // Speech Recognition
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
@@ -499,6 +590,14 @@
     } else {
       micBtn.style.display = 'none';
     }
+
+    // Add click listener to images in messages (event delegation)
+    messagesDiv.addEventListener('click', function(e) {
+      if (e.target.classList.contains('chat-img')) {
+        lightboxImg.src = e.target.src;
+        lightbox.style.display = 'flex';
+      }
+    });
   });
 
   function handleResponsiveSidebar() {
@@ -516,9 +615,7 @@
     updateToggleButtonVisibility();
   }
 
-  // ============================================================
-  // CHATS & INCOGNITO
-  // ============================================================
+  // ---------- CHAT MANAGEMENT ----------
   function loadAllChats() {
     const stored = localStorage.getItem('vexel_chats');
     allChats = stored ? JSON.parse(stored) : [];
@@ -628,7 +725,12 @@
 
   function filterChats() {
     const q = document.getElementById('searchInput').value.toLowerCase();
-    renderChatList(q ? allChats.filter(c => c.title.toLowerCase().includes(q)) : null);
+    if (!q) {
+      renderChatList();
+    } else {
+      const filtered = allChats.filter(chat => chat.title.toLowerCase().includes(q));
+      renderChatList(filtered);
+    }
   }
 
   function toggleIncognito(forceState = null) {
@@ -662,13 +764,9 @@
     }
   }
 
-  function escapeHtml(text) {
-    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+  function escapeHtml(text) { return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  // ============================================================
-  // DRAFT MANAGEMENT
-  // ============================================================
+  // ---------- DRAFT ----------
   function saveDraft(chatId) {
     if (!chatId || isIncognito) return;
     const draft = {
@@ -697,9 +795,7 @@
     renderImagePreviews();
   }
 
-  // ============================================================
-  // RENDERING
-  // ============================================================
+  // ---------- RENDERING ----------
   function renderImagePreviews() {
     imagePreviewsContainer.innerHTML = '';
     selectedImages.forEach((img, index) => {
@@ -798,41 +894,10 @@
     messagesDiv.appendChild(div);
     scrollToBottom();
   }
+  function removeTyping() { document.getElementById('typingIndicator')?.remove(); }
+  function scrollToBottom() { messagesDiv.scrollTop = messagesDiv.scrollHeight; }
 
-  function removeTyping() {
-    const el = document.getElementById('typingIndicator');
-    if (el) el.remove();
-  }
-
-  function scrollToBottom() {
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
-
-  // ============================================================
-  // IMAGE SELECTION & CROP
-  // ============================================================
-  function handleImageSelection(event) {
-    const files = Array.from(event.target.files);
-    files.forEach(file => {
-      if (selectedImages.length >= 4) { alert('Max 4 images'); return; }
-      const reader = new FileReader();
-      reader.onload = e => {
-        const base64 = e.target.result.split(',')[1];
-        selectedImages.push({
-          mimeType: file.type,
-          data: base64,
-          previewUrl: e.target.result,
-          id: Date.now() + Math.random()
-        });
-        renderImagePreviews();
-        saveDraft(activeChatId);
-      };
-      reader.readAsDataURL(file);
-    });
-    imageInput.value = '';
-  }
-
-  // Crop modal
+  // ---------- IMAGE CROP ----------
   function openCropModal(index) {
     currentCropIndex = index;
     const img = selectedImages[index];
@@ -848,13 +913,11 @@
       background: false
     });
   }
-
   function applyCrop() {
     if (!cropper || currentCropIndex === null) return;
     const canvas = cropper.getCroppedCanvas();
     const dataUrl = canvas.toDataURL(selectedImages[currentCropIndex].mimeType);
-    const base64 = dataUrl.split(',')[1];
-    selectedImages[currentCropIndex].data = base64;
+    selectedImages[currentCropIndex].data = dataUrl.split(',')[1];
     selectedImages[currentCropIndex].previewUrl = dataUrl;
     cropper.destroy();
     cropper = null;
@@ -862,7 +925,6 @@
     renderImagePreviews();
     saveDraft(activeChatId);
   }
-
   function cancelCrop() {
     if (cropper) cropper.destroy();
     cropper = null;
@@ -870,9 +932,7 @@
     currentCropIndex = null;
   }
 
-  // ============================================================
-  // CAMERA CAPTURE
-  // ============================================================
+  // ---------- CAMERA ----------
   async function openCamera() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
@@ -880,11 +940,8 @@
       const video = document.getElementById('cameraVideo');
       video.srcObject = stream;
       document.getElementById('cameraModal').classList.add('active');
-    } catch (err) {
-      alert('Camera access denied or not available.');
-    }
+    } catch (err) { alert('Camera access denied.'); }
   }
-
   function capturePhoto() {
     const video = document.getElementById('cameraVideo');
     const canvas = document.createElement('canvas');
@@ -893,11 +950,10 @@
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0);
     const dataUrl = canvas.toDataURL('image/jpeg');
-    const base64 = dataUrl.split(',')[1];
     if (selectedImages.length >= 4) { alert('Max 4 images'); closeCamera(); return; }
     selectedImages.push({
       mimeType: 'image/jpeg',
-      data: base64,
+      data: dataUrl.split(',')[1],
       previewUrl: dataUrl,
       id: Date.now() + Math.random()
     });
@@ -905,7 +961,6 @@
     saveDraft(activeChatId);
     closeCamera();
   }
-
   function closeCamera() {
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop());
@@ -914,9 +969,7 @@
     document.getElementById('cameraModal').classList.remove('active');
   }
 
-  // ============================================================
-  // PDF HANDLING
-  // ============================================================
+  // ---------- PDF ----------
   async function handlePDFSelection(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -930,34 +983,24 @@
         fullText += content.items.map(item => item.str).join(' ') + '\n';
       }
       promptInput.value = promptInput.value + '\n\n[PDF Content]:\n' + fullText.slice(0,5000);
-    } catch(e) {
-      alert('Failed to extract PDF text.');
-    }
+    } catch(e) { alert('Failed to extract PDF text.'); }
     pdfInput.value = '';
   }
 
-  // ============================================================
-  // VOICE INPUT
-  // ============================================================
+  // ---------- VOICE ----------
   function startVoiceInput() {
     if (!recognition) return;
-    if (isRecording) {
-      recognition.stop();
-      return;
-    }
+    if (isRecording) { recognition.stop(); return; }
     isRecording = true;
     micBtn.classList.add('recording');
     recognition.start();
   }
-
   function stopRecordingUI() {
     isRecording = false;
     micBtn.classList.remove('recording');
   }
 
-  // ============================================================
-  // MESSAGE SENDING
-  // ============================================================
+  // ---------- SEND MESSAGE ----------
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
     if ((!prompt && selectedImages.length === 0 && !regenerating) || isWaiting) return;
@@ -969,9 +1012,7 @@
     const userParts = [];
     if (!regenerating) {
       if (prompt) userParts.push({ text: prompt });
-      selectedImages.forEach(img => {
-        userParts.push({ inline_data: { mime_type: img.mimeType, data: img.data } });
-      });
+      selectedImages.forEach(img => userParts.push({ inline_data: { mime_type: img.mimeType, data: img.data } }));
 
       let combinedHtml = prompt ? prompt.replace(/\n/g, '<br>') : '';
       selectedImages.forEach(img => combinedHtml += `<img src="${img.previewUrl}" class="chat-img" />`);
@@ -997,9 +1038,7 @@
     const payload = {
       prompt: regenerating ? (lastUserPrompt || '') : prompt,
       history: regenerating ? chatHistory : [...chatHistory, { role: 'user', parts: userParts }],
-      images: regenerating
-        ? (lastUserParts ? lastUserParts.filter(p => p.inline_data).map(p => ({ mimeType: p.inline_data.mime_type, data: p.inline_data.data })) : [])
-        : []
+      images: regenerating ? (lastUserParts ? lastUserParts.filter(p => p.inline_data).map(p => ({ mimeType: p.inline_data.mime_type, data: p.inline_data.data })) : []) : []
     };
 
     try {
@@ -1008,7 +1047,6 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       const data = await res.json();
       removeTyping();
 
@@ -1035,11 +1073,7 @@
     promptInput.focus();
   }
 
-  function saveCurrentChatIfNeeded() {
-    if (isIncognito) return;
-    saveCurrentChat();
-  }
-
+  function saveCurrentChatIfNeeded() { if (!isIncognito) saveCurrentChat(); }
   function saveCurrentChat() {
     if (!activeChatId || isIncognito) return;
     const chat = allChats.find(c => c.id === activeChatId);
@@ -1058,7 +1092,6 @@
   }
 
   function regenerateResponse() { sendMessage(true); }
-
   function clearCurrentChat() {
     if (isWaiting) return;
     chatHistory = [];
@@ -1067,7 +1100,6 @@
     clearDraftUI();
     if (!isIncognito) saveCurrentChat();
   }
-
   function toggleFeedback(type, button) {
     button.classList.toggle(type === 'like' ? 'liked' : 'disliked');
     const feedback = JSON.parse(localStorage.getItem('vexel_feedback') || '{}');
@@ -1084,7 +1116,6 @@
     updateThemeIcon();
     localStorage.setItem('vexel_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
   }
-
   function updateThemeIcon() {
     const btn = document.querySelector('.theme-btn');
     if (btn) btn.innerHTML = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
