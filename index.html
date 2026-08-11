@@ -1081,16 +1081,23 @@
     if (role === 'assistant') {
       // If this is a fresh response from AI (not history), apply typewriter
       if (!skipTypewriter) {
-        // First set a placeholder and then start typewriter
-        div.innerHTML = ''; 
-        messagesDiv.appendChild(div);
-        typeWriter(div, content, 0, () => {
-          // After typing, add action buttons
-          addMessageActions(div, content, skipActions);
-          // Re‑add code copy buttons
-          attachCodeCopyButtons(div);
-        });
-        return; // early exit
+  div.innerHTML = marked.parse(content);
+  messagesDiv.appendChild(div);
+  // Render KaTeX
+  renderMathInElement(div, {
+    delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '$', right: '$', display: false},
+      {left: '\\(', right: '\\)', display: false},
+      {left: '\\[', right: '\\]', display: true}
+    ],
+    throwOnError: false
+  });
+  addMessageActions(div, content, skipActions);
+  attachCodeCopyButtons(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  return;
+}// early exit
       } else {
         // History message: render normally
         div.innerHTML = marked.parse(content);
