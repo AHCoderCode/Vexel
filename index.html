@@ -18,16 +18,16 @@
   <!-- SHA256 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
   <style>
-    /* ========== FULL CSS (same as last stable) ========== */
+    /* ========== FULL CSS ========== */
     :root {
       --bg-deep: #0b0c18; --bg-glass: rgba(18, 20, 42, 0.7); --border-glow: rgba(120, 90, 255, 0.4);
       --accent: #8a6dff; --accent-bright: #b590ff; --text-primary: #f0eefc;
       --text-secondary: #c2c0dd; --text-muted: #7878a0;
       --user-bg: linear-gradient(135deg, #322b6b, #1a1445);
-      --assistant-bg: transparent;
-      --header-bg: rgba(16, 18, 32, 0.9); --sidebar-bg: rgba(10, 11, 22, 0.95);
-      --input-bg: rgba(20, 22, 40, 0.6); --scroll-thumb: #3a3570;
-      --neon-glow: 0 0 15px rgba(138, 109, 255, 0.5); --incognito-color: #b366ff;
+      --assistant-bg: transparent; --header-bg: rgba(16, 18, 32, 0.9);
+      --sidebar-bg: rgba(10, 11, 22, 0.95); --input-bg: rgba(20, 22, 40, 0.6);
+      --scroll-thumb: #3a3570; --neon-glow: 0 0 15px rgba(138, 109, 255, 0.5);
+      --incognito-color: #b366ff;
     }
     body.light-mode {
       --bg-deep: #f4f6ff; --bg-glass: rgba(255,255,255,0.7); --border-glow: rgba(100, 80, 255, 0.3);
@@ -98,9 +98,8 @@
     .chat-list-item.active { background:rgba(138,109,255,0.2); border-color:var(--accent); color:white; }
     .chat-list-item .title { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
     .chat-list-item .chat-actions { display:flex; gap:0.3rem; align-items:center; }
-    /* Hide checkboxes by default */
+    /* Hide checkboxes by default, show when bulk mode active */
     .chat-list-item .chat-actions input[type=checkbox] { display: none; }
-    /* In bulk mode, show them */
     .bulk-mode .chat-list-item .chat-actions input[type=checkbox] { display: inline-block; accent-color: var(--accent); transform: scale(1.1); }
     .chat-list-item .chat-actions button { border:none; color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.8rem; transition:all 0.2s; }
     .chat-list-item .chat-actions .rename-btn { background:rgba(100,200,255,0.3); color:#80c0ff; }
@@ -110,7 +109,7 @@
     .chat-list-item .chat-actions .delete-chat { background:rgba(255,70,70,0.3); color:#ff7575; }
     .chat-list-item .chat-actions .delete-chat:hover { background:#ff4444; color:white; box-shadow:0 0 10px rgba(255,68,68,0.6); }
 
-    /* Bulk delete floating confirmation button */
+    /* Bulk delete confirmation button */
     .bulk-delete-confirm {
       position: sticky; bottom: 10px; left: 0; right: 0;
       background: #ff4444; border: none; color: white; padding: 0.7rem 1.8rem;
@@ -119,7 +118,7 @@
     }
     .bulk-delete-confirm.visible { display: block; }
 
-    /* Main area (same as before) */
+    /* Main area */
     .main-area { flex:1; display:flex; flex-direction:column; height:100vh; min-width:0; }
     .header {
       background:var(--header-bg); backdrop-filter:blur(12px); border-bottom:1px solid var(--border-glow);
@@ -136,7 +135,7 @@
     .header-actions button:hover { background:var(--accent); border-color:var(--accent-bright); color:white; box-shadow:0 0 12px rgba(138,109,255,0.6); }
     .theme-btn { font-size:1.2rem; padding:0.4rem 0.8rem; }
 
-    /* Messages – Gemini style */
+    /* Messages */
     .messages {
       flex:1; overflow-y:auto; padding:2rem 2.5rem; display:flex; flex-direction:column; gap:1.5rem;
       background:transparent; scroll-behavior:smooth; position:relative;
@@ -173,6 +172,7 @@
     @keyframes bounce { 0%,60%,100% { transform:translateY(0); } 30% { transform:translateY(-8px); } }
     @keyframes fadeInUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
+    /* Scroll to bottom button */
     .scroll-bottom-btn {
       position: sticky; bottom: 20px; left: 50%; transform: translateX(-50%);
       background: var(--accent); border: none; color: white; width: 40px; height: 40px;
@@ -281,7 +281,7 @@
     </div>
   </div>
   <div class="chat-list" id="chatList">
-    <!-- Bulk delete confirmation button appears here -->
+    <!-- Bulk delete button appears here -->
   </div>
 </div>
 
@@ -359,11 +359,11 @@
       <h1><a href="https://vexelai-zeta.vercel.app/">Vexel AI</a></h1>
     </div>
     <div class="header-actions">
-      <button class="theme-btn" onclick="toggleTheme()">🌙 Dark/Light</button>
-      <button onclick="downloadChat()">⬇️ Download Chat</button>
-      <button onclick="shareChat()">📋 Share Chat</button>
-      <button onclick="clearCurrentChat()">🗑️ Delete Chat</button>
-      <button id="lockChatBtn" onclick="toggleLockChat()">🔒 Lock</button>
+      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+      <button onclick="downloadChat()">⬇️</button>
+      <button onclick="shareChat()">📋</button>
+      <button onclick="clearCurrentChat()">🗑️</button>
+      <button id="lockChatBtn" onclick="toggleLockChat()">🔒</button>
     </div>
   </div>
 
@@ -398,7 +398,7 @@
       </div>
     </div>
   </div>
-  <div class="footer-note">Vexel is an AI and can make mistakes. Check important info.</div>
+  <div class="footer-note">1000 Messages a day! · Voice, Camera, Crop, PDF, Image Gen, Lockable Chats</div>
 </div>
 
 <script>
@@ -1011,7 +1011,7 @@
     renderImagePreviews();
   }
 
-  // ========== RENDERING (NO TYPEWRITER) ==========
+  // ========== RENDERING (INSTANT, NO TYPEWRITER) ==========
   function renderImagePreviews() {
     imagePreviewsContainer.innerHTML = '';
     selectedImages.forEach((img, index) => {
@@ -1348,7 +1348,7 @@
       removeTyping();
 
       if (!res.ok || data.error) {
-        renderMessage('assistant', `⚠️ **API Error:**\n${data.error?.message || JSON.stringify(data)}`, null, false, false, true);
+        renderMessage('assistant', `⚠️ **API Error:**\n${data.error?.message || JSON.stringify(data)}`);
       } else if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
         const reply = data.candidates[0].content.parts[0].text;
         renderMessage('assistant', reply, null, true, false, false);
@@ -1357,11 +1357,11 @@
         saveCurrentChatIfNeeded();
         renderChatList();
       } else {
-        renderMessage('assistant', '❌ Unexpected response format.', null, false, false, true);
+        renderMessage('assistant', '❌ Unexpected response format.');
       }
     } catch (err) {
       removeTyping();
-      renderMessage('assistant', `🚨 Network error: ${err.message}`, null, false, false, true);
+      renderMessage('assistant', `🚨 Network error: ${err.message}`);
     }
 
     isWaiting = false;
@@ -1394,7 +1394,7 @@
     if (isWaiting) return;
     chatHistory = [];
     messagesDiv.innerHTML = '';
-    renderMessage('assistant', '✨ Conversation cleared.', null, false, true, true);
+    renderMessage('assistant', '✨ Conversation cleared.', null, false, true);
     clearDraftUI();
     if (!isIncognito) saveCurrentChat();
   }
@@ -1430,6 +1430,5 @@
     if (!isIncognito && activeChatId) saveDraft(activeChatId);
   });
 </script>
-
-
-
+</body>
+</html>
