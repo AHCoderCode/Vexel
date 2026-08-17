@@ -360,13 +360,17 @@
       <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
       <h1><a href="https://vexelai-zeta.vercel.app/">Vexel AI</a></h1>
     </div>
-    <div class="header-actions">
-      <button class="theme-btn" onclick="toggleTheme()">🌙 Theme</button>
-      <button onclick="downloadChat()">⬇️ Download Chat</button>
-      <button onclick="shareChat()">📋 Share Chat</button>
-      <button onclick="clearCurrentChat()">🗑️ Clear Chat</button>
-      <button id="lockChatBtn" onclick="toggleLockChat()">🔒 Lock</button>
-    </div>
+    <div class="header-actions" id="authButtonsContainer">
+  <a href="/signup.html" class="auth-link" id="signupLink" style="color:white; background:rgba(22,24,45,0.6); border:1px solid var(--border-glow); padding:0.5rem 0.8rem; border-radius:10px; font-size:0.85rem;">Sign Up</a>
+  <a href="/login.html" class="auth-link" id="loginLink" style="color:white; background:rgba(22,24,45,0.6); border:1px solid var(--border-glow); padding:0.5rem 0.8rem; border-radius:10px; font-size:0.85rem; margin-left:0.4rem;">Log In</a>
+  <span id="userGreeting" style="display:none; color:var(--text-secondary); margin-left:0.4rem;"></span>
+  <button id="logoutBtn" style="display:none; background:rgba(255,70,70,0.3); border:1px solid #ff4444; color:#ff7575; padding:0.5rem 0.8rem; border-radius:10px; font-size:0.85rem; margin-left:0.4rem;" onclick="logout()">Log Out</button>
+  <button class="theme-btn" onclick="toggleTheme()">🌙 Theme</button>
+  <button onclick="downloadChat()">⬇️ Download Chat</button>
+  <button onclick="shareChat()">📋 Share Chat</button>
+  <button onclick="clearCurrentChat()">🗑️ Clear Chat</button>
+  <button id="lockChatBtn" onclick="toggleLockChat()">🔒 Lock</button>
+</div>
   </div>
 
   <div class="messages" id="messages"></div>
