@@ -1435,6 +1435,36 @@
     this.style.height = Math.min(this.scrollHeight, 140) + 'px';
     if (!isIncognito && activeChatId) saveDraft(activeChatId);
   });
+
+  // Supabase auth state
+  async function updateAuthUI() {
+    const { data: { user } } = await supabase.auth.getUser();
+    const signupLink = document.getElementById('signupLink');
+    const loginLink = document.getElementById('loginLink');
+    const userGreeting = document.getElementById('userGreeting');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (user) {
+      signupLink.style.display = 'none';
+      loginLink.style.display = 'none';
+      userGreeting.style.display = 'inline';
+      logoutBtn.style.display = 'inline-block';
+      userGreeting.textContent = user.user_metadata?.username || 'User';
+    } else {
+      signupLink.style.display = 'inline';
+      loginLink.style.display = 'inline';
+      userGreeting.style.display = 'none';
+      logoutBtn.style.display = 'none';
+    }
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    window.location.reload();
+  }
+
+  window.addEventListener('load', updateAuthUI);
+  supabase.auth.onAuthStateChange(() => updateAuthUI());
 </script>
 </body>
 </html>
