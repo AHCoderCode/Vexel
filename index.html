@@ -1360,8 +1360,16 @@
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error?.message || 'API error');
+        // Safely parse error: try JSON, fallback to text
+        let errorMessage = 'API error';
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch (e) {
+          const text = await res.text();
+          errorMessage = text || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       // Streaming consumption
@@ -1406,7 +1414,6 @@
       if (fullResponse) {
         // Remove pending flag and add model response
         if (!regenerating) {
-          // Find user message with pending and replace with clean
           const pendingIndex = chatHistory.findIndex(m => m.pending);
           if (pendingIndex !== -1) chatHistory[pendingIndex] = { role: 'user', parts: lastUserParts };
         }
@@ -1539,17 +1546,13 @@
   function resumePendingGeneration() {
     const pendingMsg = chatHistory.find(m => m.pending);
     if (!pendingMsg) return;
-    // Show placeholder
     renderMessage('assistant', '⏳ Resuming generation…', null, false, true);
-    // Get last user parts
     const lastUser = chatHistory.filter(m => m.role === 'user').pop();
     if (lastUser) {
       lastUserPrompt = lastUser.parts.find(p => p.text)?.text || '';
       lastUserParts = lastUser.parts.filter(p => !p.pending);
-      // Remove pending flag
       chatHistory = chatHistory.filter(m => !m.pending);
       saveCurrentChat();
-      // Re-send as regenerating
       sendMessage(true);
     }
   }
