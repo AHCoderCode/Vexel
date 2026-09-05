@@ -1360,15 +1360,13 @@
       });
 
       if (!res.ok) {
-        // Safely parse error: try JSON, fallback to text
-        let errorMessage = 'API error';
+        // Read body only once
+        const text = await res.text();
+        let errorMessage = text || 'API error';
         try {
-          const errorData = await res.json();
+          const errorData = JSON.parse(text);
           errorMessage = errorData.error?.message || errorMessage;
-        } catch (e) {
-          const text = await res.text();
-          errorMessage = text || errorMessage;
-        }
+        } catch (e) { /* keep text as error message */ }
         throw new Error(errorMessage);
       }
 
