@@ -453,7 +453,6 @@
   let isBulkMode = false;
   let selectedChats = new Set();
   let scrollBottomBtn = null;
-  let currentAssistantDiv = null; // for streaming
 
   // ========== INIT ==========
   window.addEventListener('load', () => {
@@ -1304,7 +1303,7 @@
     a.click();
   }
 
-  // ========== SEND MESSAGE (STREAMING) ==========
+  // ========== SEND MESSAGE (NON-STREAMING, WITH PENDING) ==========
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
     if ((!prompt && selectedImages.length === 0 && !regenerating) || isWaiting) return;
@@ -1359,82 +1358,43 @@
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        // Read body only once
-        const text = await res.text();
-        let errorMessage = text || 'API error';
-        try {
-          const errorData = JSON.parse(text);
-          errorMessage = errorData.error?.message || errorMessage;
-        } catch (e) { /* keep text as error message */ }
-        throw new Error(errorMessage);
-      }
+      const data = await res.json();
+      removeTyping();
 
-      // Streaming consumption
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      currentAssistantDiv = null;
-      let fullResponse = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        let lines = buffer.split('\n');
-        buffer = lines.pop();
-        for (const line of lines) {
-          if (line.startsWith('data:')) {
-            const data = line.slice(5).trim();
-            if (data === '[DONE]') continue;
-            try {
-              const json = JSON.parse(data);
-              const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-              if (text) {
-                fullResponse += text;
-                if (!currentAssistantDiv) {
-                  removeTyping();
-                  currentAssistantDiv = document.createElement('div');
-                  currentAssistantDiv.className = 'message assistant';
-                  messagesDiv.appendChild(currentAssistantDiv);
-                }
-                currentAssistantDiv.innerHTML = marked.parse(fullResponse);
-                renderMathInElement(currentAssistantDiv, { delimiters: [{left:'$$', right:'$$', display:true}, {left:'$', right:'$', display:false}] , throwOnError:false});
-                attachCodeCopyButtons(currentAssistantDiv);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-              }
-            } catch (e) { /* ignore partial */ }
+      if (!res.ok || data.error) {
+        renderMessage('assistant', `⚠️ **API Error:**\n${data.error?.message || JSON.stringify(data)}`);
+        // Remove pending user message on error
+        if (!regenerating) {
+          const pendingIndex = chatHistory.findIndex(m => m.pending);
+          if (pendingIndex !== -1) {
+            chatHistory.splice(pendingIndex, 1);
+            saveCurrentChat();
           }
         }
-      }
-
-      // Finalize
-      if (fullResponse) {
-        // Remove pending flag and add model response
+      } else if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        const reply = data.candidates[0].content.parts[0].text;
+        // Remove pending flag from user message and add assistant response
         if (!regenerating) {
           const pendingIndex = chatHistory.findIndex(m => m.pending);
           if (pendingIndex !== -1) chatHistory[pendingIndex] = { role: 'user', parts: lastUserParts };
         }
-        chatHistory.push({ role: 'model', parts: [{ text: fullResponse }] });
+        chatHistory.push({ role: 'model', parts: [{ text: reply }] });
         saveCurrentChat();
+        renderMessage('assistant', reply, null, true, false, false);
         renderChatList();
-        if (currentAssistantDiv) {
-          addMessageActions(currentAssistantDiv, fullResponse, false);
-        }
       } else {
-        // Empty response
+        renderMessage('assistant', '❌ Unexpected response format.');
         if (!regenerating) {
           const pendingIndex = chatHistory.findIndex(m => m.pending);
-          if (pendingIndex !== -1) chatHistory.splice(pendingIndex, 1);
-          saveCurrentChat();
+          if (pendingIndex !== -1) {
+            chatHistory.splice(pendingIndex, 1);
+            saveCurrentChat();
+          }
         }
-        removeTyping();
-        renderMessage('assistant', '⚠️ Empty response from API.');
       }
     } catch (err) {
       removeTyping();
-      renderMessage('assistant', `🚨 Error: ${err.message}`);
-      // Remove pending user message on error to avoid stuck pending
+      renderMessage('assistant', `🚨 Network error: ${err.message}`);
       if (!regenerating) {
         const pendingIndex = chatHistory.findIndex(m => m.pending);
         if (pendingIndex !== -1) {
