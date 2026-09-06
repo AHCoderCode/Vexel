@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Vexel AI</title>
-  <!-- KaTeX -->
+  <!-- KaTeX for advanced math -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -17,10 +17,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <!-- SHA256 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabaseClient.js"></script>
+<script src="supabaseClient.js"></script>
   <style>
+    /* ========== FULL CSS ========== */
     :root {
       --bg-deep: #0b0c18; --bg-glass: rgba(18, 20, 42, 0.7); --border-glow: rgba(120, 90, 255, 0.4);
       --accent: #8a6dff; --accent-bright: #b590ff; --text-primary: #f0eefc;
@@ -100,6 +100,7 @@
     .chat-list-item.active { background:rgba(138,109,255,0.2); border-color:var(--accent); color:white; }
     .chat-list-item .title { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
     .chat-list-item .chat-actions { display:flex; gap:0.3rem; align-items:center; }
+    /* Hide checkboxes by default, show when bulk mode active */
     .chat-list-item .chat-actions input[type=checkbox] { display: none; }
     .bulk-mode .chat-list-item .chat-actions input[type=checkbox] { display: inline-block; accent-color: var(--accent); transform: scale(1.1); }
     .chat-list-item .chat-actions button { border:none; color:#fff; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.8rem; transition:all 0.2s; }
@@ -110,6 +111,7 @@
     .chat-list-item .chat-actions .delete-chat { background:rgba(255,70,70,0.3); color:#ff7575; }
     .chat-list-item .chat-actions .delete-chat:hover { background:#ff4444; color:white; box-shadow:0 0 10px rgba(255,68,68,0.6); }
 
+    /* Bulk delete confirmation button */
     .bulk-delete-confirm {
       position: sticky; bottom: 10px; left: 0; right: 0;
       background: #ff4444; border: none; color: white; padding: 0.7rem 1.8rem;
@@ -172,6 +174,7 @@
     @keyframes bounce { 0%,60%,100% { transform:translateY(0); } 30% { transform:translateY(-8px); } }
     @keyframes fadeInUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
+    /* Scroll to bottom button */
     .scroll-bottom-btn {
       position: sticky; bottom: 20px; left: 50%; transform: translateX(-50%);
       background: var(--accent); border: none; color: white; width: 40px; height: 40px;
@@ -185,7 +188,7 @@
     .preview-thumb { position:relative; width:56px; height:56px; border-radius:8px; border:2px solid var(--accent); overflow:hidden; cursor:pointer; box-shadow:0 0 10px rgba(138,109,255,0.4); }
     .preview-thumb img { width:100%; height:100%; object-fit:cover; }
     .preview-thumb .remove-thumb { position:absolute; top:-4px; right:-4px; background:#ff4d4d; color:white; border:none; width:18px; height:18px; border-radius:50%; font-size:10px; display:flex; align-items:center; justify-content:center; }
-    .input-area { display:flex; gap:0.5rem; align-items:flex-end; position:relative; background:var(--input-bg); border:1px solid var(--border-glow); border-radius:24px; padding:0.5rem; backdrop-filter:blur(12px); box-shadow:0 0 20px rgba(138,109,255,0.3); }
+    .input-area { display:flex; gap:0.5rem; align-items:flex-end; position:relative; }
     .tool-btn, .send-btn { height:52px; border-radius:14px; font-size:0.95rem; }
     .plus-toggle {
       background:var(--accent); border:none; color:white; width:52px; height:52px; border-radius:50%;
@@ -194,12 +197,12 @@
     }
     .plus-toggle:hover { background:var(--accent-bright); box-shadow:0 0 25px rgba(138,109,255,0.8); transform:scale(1.05); }
     .input-area textarea {
-      flex:1; padding:0.9rem 1.2rem; background:transparent; border:none;
+      flex:1; padding:0.9rem 1.2rem; background:var(--input-bg); border:1px solid var(--border-glow);
       border-radius:14px; color:var(--text-primary); resize:none; outline:none;
       min-height:52px; max-height:140px; font-size:0.95rem;
     }
-    .input-area textarea:focus { border: none; box-shadow:none; }
-    .send-btn { background:linear-gradient(135deg, #8a6dff, #a78bfa); border:none; color:white; padding:0 1.8rem; font-weight:600; box-shadow:0 0 15px rgba(138,109,255,0.5); border-radius:50%; width:52px; height:52px; padding:0; display:flex; align-items:center; justify-content:center; }
+    .input-area textarea:focus { border-color:var(--accent-bright); box-shadow:0 0 12px rgba(138,109,255,0.4); }
+    .send-btn { background:linear-gradient(135deg, #8a6dff, #a78bfa); border:none; color:white; padding:0 1.8rem; font-weight:600; box-shadow:0 0 15px rgba(138,109,255,0.5); }
     .send-btn:hover { background:linear-gradient(135deg, #9b7efc, #b590ff); box-shadow:0 0 25px rgba(138,109,255,0.8); transform:translateY(-2px); }
     .send-btn:disabled { opacity:0.6; pointer-events:none; }
 
@@ -279,7 +282,9 @@
       <button class="bulk-toggle-btn" id="bulkToggleBtn" onclick="toggleBulkMode()">🗑️ Bulk Delete</button>
     </div>
   </div>
-  <div class="chat-list" id="chatList"></div>
+  <div class="chat-list" id="chatList">
+    <!-- Bulk delete button appears here -->
+  </div>
 </div>
 
 <!-- Delete modal -->
@@ -356,16 +361,16 @@
       <h1><a href="https://vexelai-zeta.vercel.app/">Vexel AI</a></h1>
     </div>
     <div class="header-actions" id="authButtonsContainer">
-      <a href="/signup.html" class="auth-link" id="signupLink" style="color:white; background:rgba(22,24,45,0.6); border:1px solid var(--border-glow); padding:0.5rem 0.8rem; border-radius:10px; font-size:0.85rem;">Sign Up</a>
-      <a href="/login.html" class="auth-link" id="loginLink" style="color:white; background:rgba(22,24,45,0.6); border:1px solid var(--border-glow); padding:0.5rem 0.8rem; border-radius:10px; font-size:0.85rem; margin-left:0.4rem;">Log In</a>
-      <span id="userGreeting" style="display:none; color:var(--text-secondary); margin-left:0.4rem;"></span>
-      <button id="logoutBtn" style="display:none; background:rgba(255,70,70,0.3); border:1px solid #ff4444; color:#ff7575; padding:0.5rem 0.8rem; border-radius:10px; font-size:0.85rem; margin-left:0.4rem;" onclick="logout()">Log Out</button>
-      <button class="theme-btn" onclick="toggleTheme()">🌙 Theme</button>
-      <button onclick="downloadChat()">⬇️ Download Chat</button>
-      <button onclick="shareChat()">📋 Share Chat</button>
-      <button onclick="clearCurrentChat()">🗑️ Clear Chat</button>
-      <button id="lockChatBtn" onclick="toggleLockChat()">🔒 Lock</button>
-    </div>
+  <a href="/signup.html" class="auth-link" id="signupLink" style="color:white; background:rgba(22,24,45,0.6); border:1px solid var(--border-glow); padding:0.5rem 0.8rem; border-radius:10px; font-size:0.85rem;">Sign Up</a>
+  <a href="/login.html" class="auth-link" id="loginLink" style="color:white; background:rgba(22,24,45,0.6); border:1px solid var(--border-glow); padding:0.5rem 0.8rem; border-radius:10px; font-size:0.85rem; margin-left:0.4rem;">Log In</a>
+  <span id="userGreeting" style="display:none; color:var(--text-secondary); margin-left:0.4rem;"></span>
+  <button id="logoutBtn" style="display:none; background:rgba(255,70,70,0.3); border:1px solid #ff4444; color:#ff7575; padding:0.5rem 0.8rem; border-radius:10px; font-size:0.85rem; margin-left:0.4rem;" onclick="logout()">Log Out</button>
+  <button class="theme-btn" onclick="toggleTheme()">🌙 Theme</button>
+  <button onclick="downloadChat()">⬇️ Download Chat</button>
+  <button onclick="shareChat()">📋 Share Chat</button>
+  <button onclick="clearCurrentChat()">🗑️ Clear Chat</button>
+  <button id="lockChatBtn" onclick="toggleLockChat()">🔒 Lock</button>
+</div>
   </div>
 
   <div class="messages" id="messages"></div>
@@ -378,7 +383,7 @@
     <div class="input-area">
       <button class="plus-toggle" id="plusToggle" onclick="togglePlusMenu()">+</button>
       <textarea id="promptInput" rows="1" placeholder="Type your message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
-      <button id="sendBtn" class="send-btn" onclick="sendMessage()">➤</button>
+      <button id="sendBtn" class="send-btn" onclick="sendMessage()">Send</button>
     </div>
 
     <div class="plus-menu" id="plusMenu">
@@ -567,14 +572,6 @@
         plusMenu.classList.remove('active');
       }
     });
-
-    // Auto-resume pending generation if any
-    if (!isIncognito && activeChatId) {
-      const chat = allChats.find(c => c.id === activeChatId);
-      if (chat && chat.messages && chat.messages.some(m => m.pending)) {
-        resumePendingGeneration();
-      }
-    }
   });
 
   function toggleNewPinVisibility() {
@@ -1020,7 +1017,7 @@
     renderImagePreviews();
   }
 
-  // ========== RENDERING ==========
+  // ========== RENDERING (INSTANT, NO TYPEWRITER) ==========
   function renderImagePreviews() {
     imagePreviewsContainer.innerHTML = '';
     selectedImages.forEach((img, index) => {
@@ -1038,7 +1035,6 @@
       renderMessage('assistant', '👋 Hello! I\'m Vexel. Ask me anything or upload files.', null, false, true);
     } else {
       chatHistory.forEach(msg => {
-        if (msg.pending) return; // skip pending; will be handled separately
         const role = msg.role === 'model' ? 'assistant' : 'user';
         const textPart = msg.parts.find(p => p.text);
         const imageParts = msg.parts.filter(p => p.inline_data);
@@ -1060,6 +1056,7 @@
     if (role === 'assistant') {
       // Instantly render full message – no typewriter delay
       div.innerHTML = marked.parse(content);
+      // Render KaTeX for math formulas
       renderMathInElement(div, {
         delimiters: [
           {left: '$$', right: '$$', display: true},
@@ -1069,9 +1066,12 @@
         ],
         throwOnError: false
       });
+      // Attach code copy buttons
       attachCodeCopyButtons(div);
+      // Add action buttons (Copy, Regenerate, Like/Dislike)
       if (!skipActions) addMessageActions(div, content, false);
     } else {
+      // User message
       div.innerHTML = content.replace(/\n/g, '<br>');
     }
 
@@ -1279,7 +1279,6 @@
   function shareChat() {
     let text = '';
     chatHistory.forEach(msg => {
-      if (msg.pending) return;
       const role = msg.role === 'model' ? 'AI' : 'You';
       const textPart = msg.parts.find(p => p.text);
       if (textPart) text += `*${role}:* ${textPart.text}\n\n`;
@@ -1292,7 +1291,6 @@
   function downloadChat() {
     let text = '';
     chatHistory.forEach(msg => {
-      if (msg.pending) return;
       const role = msg.role === 'model' ? 'AI' : 'You';
       const textPart = msg.parts.find(p => p.text);
       if (textPart) text += `**${role}:** ${textPart.text}\n\n`;
@@ -1304,7 +1302,7 @@
     a.click();
   }
 
-  // ========== SEND MESSAGE (NON-STREAMING, WITH PENDING) ==========
+  // ========== SEND MESSAGE ==========
   async function sendMessage(regenerating = false) {
     const prompt = promptInput.value.trim();
     if ((!prompt && selectedImages.length === 0 && !regenerating) || isWaiting) return;
@@ -1322,10 +1320,6 @@
       selectedImages.forEach(img => combinedHtml += `<img src="${img.previewUrl}" class="chat-img" />`);
       renderMessage('user', combinedHtml, null, true, false);
 
-      // Save user message immediately with pending flag
-      chatHistory.push({ role: 'user', parts: userParts, pending: true });
-      saveCurrentChat();
-
       promptInput.value = '';
       promptInput.style.height = '52px';
       selectedImages = [];
@@ -1334,14 +1328,12 @@
       lastUserPrompt = prompt;
       lastUserParts = userParts;
     } else {
-      // Regenerate: remove last assistant message if exists
       if (chatHistory.length > 0 && chatHistory[chatHistory.length-1].role === 'model') {
         chatHistory.pop();
-        saveCurrentChat();
+        saveCurrentChatIfNeeded();
         const lastAssistant = messagesDiv.querySelector('.message.assistant:last-child');
         if (lastAssistant) lastAssistant.remove();
       }
-      // Use lastUserParts
     }
 
     showTyping();
@@ -1358,51 +1350,24 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       const data = await res.json();
       removeTyping();
 
       if (!res.ok || data.error) {
         renderMessage('assistant', `⚠️ **API Error:**\n${data.error?.message || JSON.stringify(data)}`);
-        // Remove pending user message on error
-        if (!regenerating) {
-          const pendingIndex = chatHistory.findIndex(m => m.pending);
-          if (pendingIndex !== -1) {
-            chatHistory.splice(pendingIndex, 1);
-            saveCurrentChat();
-          }
-        }
       } else if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
         const reply = data.candidates[0].content.parts[0].text;
-        // Remove pending flag from user message and add assistant response
-        if (!regenerating) {
-          const pendingIndex = chatHistory.findIndex(m => m.pending);
-          if (pendingIndex !== -1) chatHistory[pendingIndex] = { role: 'user', parts: lastUserParts };
-        }
-        chatHistory.push({ role: 'model', parts: [{ text: reply }] });
-        saveCurrentChat();
         renderMessage('assistant', reply, null, true, false, false);
+        if (!regenerating) chatHistory.push({ role: 'user', parts: userParts });
+        chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+        saveCurrentChatIfNeeded();
         renderChatList();
       } else {
         renderMessage('assistant', '❌ Unexpected response format.');
-        if (!regenerating) {
-          const pendingIndex = chatHistory.findIndex(m => m.pending);
-          if (pendingIndex !== -1) {
-            chatHistory.splice(pendingIndex, 1);
-            saveCurrentChat();
-          }
-        }
       }
     } catch (err) {
       removeTyping();
       renderMessage('assistant', `🚨 Network error: ${err.message}`);
-      if (!regenerating) {
-        const pendingIndex = chatHistory.findIndex(m => m.pending);
-        if (pendingIndex !== -1) {
-          chatHistory.splice(pendingIndex, 1);
-          saveCurrentChat();
-        }
-      }
     }
 
     isWaiting = false;
@@ -1500,21 +1465,6 @@
 
   window.addEventListener('load', updateAuthUI);
   supabase.auth.onAuthStateChange(() => updateAuthUI());
-
-  // ========== RESUME PENDING GENERATION ==========
-  function resumePendingGeneration() {
-    const pendingMsg = chatHistory.find(m => m.pending);
-    if (!pendingMsg) return;
-    renderMessage('assistant', '⏳ Resuming generation…', null, false, true);
-    const lastUser = chatHistory.filter(m => m.role === 'user').pop();
-    if (lastUser) {
-      lastUserPrompt = lastUser.parts.find(p => p.text)?.text || '';
-      lastUserParts = lastUser.parts.filter(p => !p.pending);
-      chatHistory = chatHistory.filter(m => !m.pending);
-      saveCurrentChat();
-      sendMessage(true);
-    }
-  }
 </script>
 </body>
 </html>
