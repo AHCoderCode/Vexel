@@ -13,6 +13,7 @@ export default async function handler(req, res) {
   const MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
   try {
+    // Build parts for the current user message
     const currentParts = [];
     if (prompt) currentParts.push({ text: prompt });
     if (images && Array.isArray(images)) {
@@ -26,6 +27,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // Build contents array from history (previous turns) + current user message
     let contents = Array.isArray(history) ? [...history] : [];
     contents.push({ role: 'user', parts: currentParts });
 
