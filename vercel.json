@@ -1,6 +1,5 @@
 {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents })
-      }
-    );
+  "rewrites": [
+    { "source": "/((?!api/.*|.*\\.html$).*)", "destination": "/index.html" }
+  ]
+}
