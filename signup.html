@@ -64,42 +64,96 @@
 
   <script>
     async function signup() {
-      const username = document.getElementById('username').value.trim();
-      const age = document.getElementById('age').value;
-      const password = document.getElementById('password').value;
-      const errorEl = document.getElementById('error');
-      errorEl.textContent = '';
+      const usernameInput = document.getElementById('username');
+    const ageInput = document.getElementById('age');
+    const passwordInput = document.getElementById('password');
+    const errorEl = document.getElementById('error');
+    const button = document.querySelector('button');
 
-      if (!username || username.length < 3 || username.length > 20) {
-        errorEl.textContent = 'Username must be 3-20 characters.';
-        return;
-      }
-      const ageNum = Number(age);
-      if (!age || isNaN(ageNum) || ageNum < 5 || ageNum > 120) {
-        errorEl.textContent = 'Age must be between 5 and 120.';
-        return;
-      }
-      if (password.length < 6) {
-        errorEl.textContent = 'Password must be at least 6 characters.';
-        return;
-      }
+    const username = usernameInput.value.trim();
+    const age = ageInput.value.trim();
+    const password = passwordInput.value;
 
-      const email = username.toLowerCase() + '@vexel.ai';
+    errorEl.textContent = '';
+
+    // Username must be 3-20 characters
+    // Only letters, numbers and underscore are allowed.
+    if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+      errorEl.textContent =
+        'Username must be 3-20 characters and use only letters, numbers, or _.';
+      return;
+    }
+
+    // Check age
+    const ageNum = Number(age);
+
+    if (!age || !Number.isInteger(ageNum) || ageNum < 5 || ageNum > 120) {
+      errorEl.textContent =
+        'Age must be a whole number between 5 and 120.';
+      return;
+    }
+
+    // Check password
+    if (password.length < 6) {
+      errorEl.textContent =
+        'Password must be at least 6 characters.';
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Creating Account...';
+
+    try {
+      // Convert the Vexel username into an internal email.
+      const email = `${username.toLowerCase()}@vexel.ai`;
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { username, age: ageNum }
+          data: {
+            username,
+            age: ageNum
+          }
         }
       });
 
       if (error) {
-        if (error.message.includes('duplicate') || error.message.includes('already')) {
+        console.error('Signup error:', error);
+
+        const message = error.message.toLowerCase();
+
+        if (
+          message.includes('already registered') ||
+          message.includes('already exists') ||
+          message.includes('duplicate')
+        ) {
           errorEl.textContent = 'Username is already taken.';
         } else {
           errorEl.textContent = error.message;
         }
+
         return;
+      }
+
+      // With Confirm Email disabled, Supabase should return a session.
+      if (!data.session) {
+        errorEl.textContent =
+          'Account was created, but Supabase did not create a session. Check that Confirm Email is OFF.';
+        return;
+      }
+
+      // Successful signup
+      window.location.href = '/';
+
+    } catch (err) {
+      console.error('Unexpected signup error:', err);
+      errorEl.textContent =
+        'Something went wrong. Please try again.';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Create Account';
+    }
       }
 
       // Success – redirect to main app
