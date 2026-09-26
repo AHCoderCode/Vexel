@@ -79,15 +79,24 @@
       return;
     }
 
+    // Make sure Supabase initialized correctly
+    if (!window.vexelSupabase) {
+      console.error('Supabase client is not initialized.');
+      errorEl.textContent =
+        'Supabase failed to initialize. Please refresh the page.';
+      return;
+    }
+
     try {
       const email = username.toLowerCase() + '@vexel.ai';
 
       console.log('Attempting login:', email);
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
+      const { data, error } =
+        await window.vexelSupabase.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
 
       console.log('Login response:', data, error);
 
