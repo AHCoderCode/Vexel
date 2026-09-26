@@ -62,63 +62,119 @@
   </div>
 
   <script>
-    async function login() {
-      const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
+  document.addEventListener('DOMContentLoaded', () => {
+
+    const button = document.getElementById('signupButton');
     const errorEl = document.getElementById('error');
-    const button = document.querySelector('button');
 
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value;
+    button.addEventListener('click', signup);
 
-    errorEl.textContent = '';
+    async function signup() {
 
-    if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
-      errorEl.textContent = 'Please enter a valid username.';
-      return;
-    }
+      errorEl.textContent = '';
 
-    if (!password) {
-      errorEl.textContent = 'Please enter your password.';
-      return;
-    }
+      const username = document.getElementById('username').value.trim();
+      const age = document.getElementById('age').value.trim();
+      const password = document.getElementById('password').value;
 
-    button.disabled = true;
-    button.textContent = 'Logging In...';
+      // Check that Supabase actually loaded
+      if (!window.supabase) {
+        errorEl.textContent =
+          'Supabase library failed to load. Refresh the page and try again.';
+        console.error('window.supabase is missing');
+        return;
+      }
 
-    try {
-      const email = `${username.toLowerCase()}@vexel.ai`;
+      // Check that your Supabase client loaded
+      if (typeof supabase === 'undefined') {
+        errorEl.textContent =
+          'Supabase client failed to load. Check supabaseClient.js.';
+        console.error('supabase client is missing');
+        return;
+      }
 
-      const { data, error } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password
+      // Username
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+        errorEl.textContent =
+          'Username must be 3-20 characters and use only letters, numbers, or _.';
+        return;
+      }
+
+      // Age
+      const ageNum = Number(age);
+
+      if (
+        !age ||
+        !Number.isInteger(ageNum) ||
+        ageNum < 5 ||
+        ageNum > 120
+      ) {
+        errorEl.textContent =
+          'Age must be a whole number between 5 and 120.';
+        return;
+      }
+
+      // Password
+      if (password.length < 6) {
+        errorEl.textContent =
+          'Password must be at least 6 characters.';
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = 'Creating Account...';
+
+      try {
+
+        const email = username.toLowerCase() + '@vexel.ai';
+
+        console.log('Attempting signup:', email);
+
+        const { data, error } = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              username: username,
+              age: ageNum
+            }
+          }
         });
 
-      if (error) {
-        console.error('Login error:', error);
+        console.log('Supabase response:', data, error);
+
+        if (error) {
+          console.error('Supabase signup error:', error);
+          errorEl.textContent = error.message;
+          return;
+        }
+
+        // If Confirm Email is OFF, a session should normally exist.
+        if (!data.session) {
+          errorEl.textContent =
+            'Account created, but no login session was created. Make sure Confirm Email is OFF in Supabase.';
+          return;
+        }
+
+        console.log('Signup successful.');
+
+        window.location.href = '/';
+
+      } catch (err) {
+
+        console.error('Signup crashed:', err);
+
         errorEl.textContent =
-          'Username or password is incorrect.';
-        return;
+          err.message || 'Something went wrong while creating the account.';
+
+      } finally {
+
+        button.disabled = false;
+        button.textContent = 'Create Account';
+
       }
-
-      if (!data.session) {
-        errorEl.textContent =
-          'Login failed. No session was created.';
-        return;
-      }
-
-      window.location.href = '/';
-
-    } catch (err) {
-      console.error('Unexpected login error:', err);
-      errorEl.textContent =
-        'Something went wrong. Please try again.';
-    } finally {
-      button.disabled = false;
-      button.textContent = 'Log In';
     }
-    }
-  </script>
+  });
+</script>
 </body>
 </html>
