@@ -63,25 +63,61 @@
 
   <script>
     async function login() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      const errorEl = document.getElementById('error');
-      errorEl.textContent = '';
+      const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const errorEl = document.getElementById('error');
+    const button = document.querySelector('button');
 
-      if (!username || !password) {
-        errorEl.textContent = 'Please enter both username and password.';
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+    errorEl.textContent = '';
+
+    if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+      errorEl.textContent = 'Please enter a valid username.';
+      return;
+    }
+
+    if (!password) {
+      errorEl.textContent = 'Please enter your password.';
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Logging In...';
+
+    try {
+      const email = `${username.toLowerCase()}@vexel.ai`;
+
+      const { data, error } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+      if (error) {
+        console.error('Login error:', error);
+        errorEl.textContent =
+          'Username or password is incorrect.';
         return;
       }
 
-      const email = username.toLowerCase() + '@vexel.ai';
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        errorEl.textContent = 'Username or password is incorrect.';
+      if (!data.session) {
+        errorEl.textContent =
+          'Login failed. No session was created.';
         return;
       }
 
       window.location.href = '/';
+
+    } catch (err) {
+      console.error('Unexpected login error:', err);
+      errorEl.textContent =
+        'Something went wrong. Please try again.';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Log In';
+    }
     }
   </script>
 </body>
