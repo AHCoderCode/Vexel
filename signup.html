@@ -63,18 +63,26 @@
   </div>
 
   <script>
-    async function signup() {
-      const usernameInput = document.getElementById('username');
+  async function signup() {
+    const usernameInput = document.getElementById('username');
     const ageInput = document.getElementById('age');
     const passwordInput = document.getElementById('password');
     const errorEl = document.getElementById('error');
-    const button = document.querySelector('button');
+    const button = document.getElementById('signupButton');
 
     const username = usernameInput.value.trim();
     const age = ageInput.value.trim();
     const password = passwordInput.value;
 
+    const supabaseClient = window.vexelSupabase;
+
     errorEl.textContent = '';
+
+    if (!supabaseClient) {
+      errorEl.textContent =
+        'Supabase failed to initialize. Please refresh the page.';
+      return;
+    }
 
     // Username must be 3-20 characters
     // Only letters, numbers and underscore are allowed.
@@ -104,15 +112,15 @@
     button.textContent = 'Creating Account...';
 
     try {
-      // Convert the Vexel username into an internal email.
+      // Convert Vexel username into an internal email.
       const email = `${username.toLowerCase()}@vexel.ai`;
 
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
         options: {
           data: {
-            username,
+            username: username,
             age: ageNum
           }
         }
@@ -148,17 +156,20 @@
 
     } catch (err) {
       console.error('Unexpected signup error:', err);
+
       errorEl.textContent =
         'Something went wrong. Please try again.';
+
     } finally {
       button.disabled = false;
       button.textContent = 'Create Account';
     }
-      }
+  }
 
-      // Success – redirect to main app
-      window.location.href = '/';
-    }
-  </script>
+  // Make the button actually run signup()
+  document
+    .getElementById('signupButton')
+    .addEventListener('click', signup);
+</script>
 </body>
 </html>
