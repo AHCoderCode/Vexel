@@ -62,119 +62,57 @@
   </div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-
-    const button = document.getElementById('signupButton');
+  async function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
     const errorEl = document.getElementById('error');
 
-    button.addEventListener('click', signup);
+    errorEl.textContent = '';
 
-    async function signup() {
-
-      errorEl.textContent = '';
-
-      const username = document.getElementById('username').value.trim();
-      const age = document.getElementById('age').value.trim();
-      const password = document.getElementById('password').value;
-
-      // Check that Supabase actually loaded
-      if (!window.supabase) {
-        errorEl.textContent =
-          'Supabase library failed to load. Refresh the page and try again.';
-        console.error('window.supabase is missing');
-        return;
-      }
-
-      // Check that your Supabase client loaded
-      if (typeof supabase === 'undefined') {
-        errorEl.textContent =
-          'Supabase client failed to load. Check supabaseClient.js.';
-        console.error('supabase client is missing');
-        return;
-      }
-
-      // Username
-      if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
-        errorEl.textContent =
-          'Username must be 3-20 characters and use only letters, numbers, or _.';
-        return;
-      }
-
-      // Age
-      const ageNum = Number(age);
-
-      if (
-        !age ||
-        !Number.isInteger(ageNum) ||
-        ageNum < 5 ||
-        ageNum > 120
-      ) {
-        errorEl.textContent =
-          'Age must be a whole number between 5 and 120.';
-        return;
-      }
-
-      // Password
-      if (password.length < 6) {
-        errorEl.textContent =
-          'Password must be at least 6 characters.';
-        return;
-      }
-
-      button.disabled = true;
-      button.textContent = 'Creating Account...';
-
-      try {
-
-        const email = username.toLowerCase() + '@vexel.ai';
-
-        console.log('Attempting signup:', email);
-
-        const { data, error } = await supabase.auth.signUp({
-          email: email,
-          password: password,
-          options: {
-            data: {
-              username: username,
-              age: ageNum
-            }
-          }
-        });
-
-        console.log('Supabase response:', data, error);
-
-        if (error) {
-          console.error('Supabase signup error:', error);
-          errorEl.textContent = error.message;
-          return;
-        }
-
-        // If Confirm Email is OFF, a session should normally exist.
-        if (!data.session) {
-          errorEl.textContent =
-            'Account created, but no login session was created. Make sure Confirm Email is OFF in Supabase.';
-          return;
-        }
-
-        console.log('Signup successful.');
-
-        window.location.href = '/';
-
-      } catch (err) {
-
-        console.error('Signup crashed:', err);
-
-        errorEl.textContent =
-          err.message || 'Something went wrong while creating the account.';
-
-      } finally {
-
-        button.disabled = false;
-        button.textContent = 'Create Account';
-
-      }
+    if (!username || !password) {
+      errorEl.textContent = 'Please enter both username and password.';
+      return;
     }
-  });
+
+    if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+      errorEl.textContent = 'Please enter a valid username.';
+      return;
+    }
+
+    try {
+      const email = username.toLowerCase() + '@vexel.ai';
+
+      console.log('Attempting login:', email);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      console.log('Login response:', data, error);
+
+      if (error) {
+        console.error('Login error:', error);
+        errorEl.textContent = 'Username or password is incorrect.';
+        return;
+      }
+
+      if (!data.session) {
+        errorEl.textContent = 'Login failed: no session was created.';
+        return;
+      }
+
+      console.log('Login successful.');
+
+      window.location.href = '/';
+
+    } catch (err) {
+      console.error('Login crashed:', err);
+
+      errorEl.textContent =
+        err.message || 'Something went wrong while logging in.';
+    }
+  }
 </script>
 </body>
 </html>
