@@ -1191,9 +1191,28 @@ body.modal-open { overflow:hidden; }
   function updateAuthUI(){const loggedIn=Boolean(currentUser);const username=currentUser?.user_metadata?.username||currentUser?.email?.split('@')[0]||'User';const initials=getInitials(username);[profileAvatar,headerProfileAvatar].forEach(el=>{if(el)el.textContent=initials;});profileName.textContent=loggedIn?username:'Guest';profileState.textContent=loggedIn?'Signed in':'Not signed in';accountMenuName.textContent=loggedIn?username:'Guest';accountMenuEmail.textContent=loggedIn?(currentUser.email||'Vexel account'):'Not signed in';menuLoginLink.hidden=loggedIn;menuSignupLink.hidden=loggedIn;menuLogoutBtn.hidden=!loggedIn;document.getElementById('signupLink').style.display=loggedIn?'none':'inline-flex';document.getElementById('loginLink').style.display=loggedIn?'none':'inline-flex';updateLockButtonState();}
   function toggleAccountMenu(forceOpen=null,fromHeader=false){const shouldOpen=forceOpen===null?accountMenu.hidden:forceOpen;accountMenu.hidden=!shouldOpen;accountMenu.classList.toggle('from-header',Boolean(fromHeader&&shouldOpen));profileButton.setAttribute('aria-expanded',String(shouldOpen));headerProfileButton?.setAttribute('aria-expanded',String(shouldOpen));}
   function closeAccountMenu(){accountMenu.hidden=true;accountMenu.classList.remove('from-header');profileButton.setAttribute('aria-expanded','false');headerProfileButton?.setAttribute('aria-expanded','false');}
-  async function logout(){if(!supabaseClient)return;menuLogoutBtn.disabled=true;try{const {error}=await supabaseClient.auth.signOut();if(error)throw error;}catch(error){console.error('Logout error:',error);alert('Vexel could not log you out. Please try again.');}finally{menuLogoutBtn.disabled=false;closeAccountMenu();}}
-  <script src="vexel-ui-fixes.js"></script>
+  async function logout(){
+  if(!supabaseClient)return;
 
+  menuLogoutBtn.disabled=true;
+
+  try{
+    const {error}=await supabaseClient.auth.signOut();
+
+    if(error)throw error;
+
+  }catch(error){
+    console.error('Logout error:',error);
+    alert('Vexel could not log you out. Please try again.');
+
+  }finally{
+    menuLogoutBtn.disabled=false;
+    closeAccountMenu();
+  }
+}
 </script>
+
+<script src="vexel-ui-fixes.js"></script>
+
 </body>
 </html>
