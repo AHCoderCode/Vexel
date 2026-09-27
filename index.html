@@ -1192,6 +1192,8 @@ body.modal-open { overflow:hidden; }
   function toggleAccountMenu(forceOpen=null,fromHeader=false){const shouldOpen=forceOpen===null?accountMenu.hidden:forceOpen;accountMenu.hidden=!shouldOpen;accountMenu.classList.toggle('from-header',Boolean(fromHeader&&shouldOpen));profileButton.setAttribute('aria-expanded',String(shouldOpen));headerProfileButton?.setAttribute('aria-expanded',String(shouldOpen));}
   function closeAccountMenu(){accountMenu.hidden=true;accountMenu.classList.remove('from-header');profileButton.setAttribute('aria-expanded','false');headerProfileButton?.setAttribute('aria-expanded','false');}
   async function logout(){if(!supabaseClient)return;menuLogoutBtn.disabled=true;try{const {error}=await supabaseClient.auth.signOut();if(error)throw error;}catch(error){console.error('Logout error:',error);alert('Vexel could not log you out. Please try again.');}finally{menuLogoutBtn.disabled=false;closeAccountMenu();}}
+  <script src="vexel-ui-fixes.js"></script>
+
 </script>
 </body>
 </html>
