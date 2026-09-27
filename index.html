@@ -1006,36 +1006,128 @@ body.modal-open { overflow:hidden; }
   }
 
   async function openCamera() {
+    const video = document.getElementById('cameraVideo');
+    const modal = document.getElementById('cameraModal');
+
+    if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+      alert('Camera is not available in this browser or page. Make sure Vexel is opened with HTTPS.');
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+      } catch (firstError) {
+        console.warn('Preferred camera request failed; retrying with a basic webcam request.', firstError);
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+
       cameraStream = stream;
-      document.getElementById('cameraVideo').srcObject = stream;
-      document.getElementById('cameraModal').classList.add('active');
-    } catch (err) { alert('Camera access denied.'); }
+      video.srcObject = stream;
+      modal.classList.add('active');
+
+      await new Promise(resolve => {
+        if (video.readyState >= 1 && video.videoWidth > 0) {
+          resolve();
+          return;
+        }
+        const onLoaded = () => {
+          video.removeEventListener('loadedmetadata', onLoaded);
+          resolve();
+        };
+        video.addEventListener('loadedmetadata', onLoaded, { once: true });
+      });
+
+      try {
+        await video.play();
+      } catch (playError) {
+        console.warn('Camera preview autoplay was blocked:', playError);
+      }
+    } catch (err) {
+      console.error('Camera error:', err);
+      const name = err?.name || '';
+      let message = 'Vexel could not open your camera.';
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+        message = 'Camera permission was denied. Allow camera access for Vexel in Chrome site settings, then try again.';
+      } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+        message = 'No camera was found on this device.';
+      } else if (name === 'NotReadableError' || name === 'TrackStartError') {
+        message = 'Your camera is already being used by another app or browser tab.';
+      } else if (name === 'SecurityError') {
+        message = 'The browser blocked camera access for security reasons. Open Vexel over HTTPS.';
+      }
+      alert(message);
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      modal.classList.remove('active');
+    }
   }
 
   function toggleTorch() {
     if (!cameraStream) return;
     const track = cameraStream.getVideoTracks()[0];
     if (!track) return;
-    if ('torch' in track.getCapabilities()) {
-      track.applyConstraints({ advanced: [{ torch: !track.getSettings().torch }] });
-      torchBtn.textContent = track.getSettings().torch ? '💡✅' : '💡';
-    } else {
-      alert('Torch not supported.');
+
+    const capabilities = typeof track.getCapabilities === 'function' ? track.getCapabilities() : {};
+    if (!capabilities.torch) {
+      alert('Torch is not supported by this camera.');
+      return;
     }
+
+    const enabled = Boolean(track.getSettings().torch);
+    track.applyConstraints({ advanced: [{ torch: !enabled }] })
+      .then(() => {
+        const button = document.getElementById('torchBtn');
+        if (button) button.textContent = !enabled ? '💡✅' : '💡';
+      })
+      .catch(error => console.warn('Torch could not be toggled:', error));
   }
 
   function capturePhoto() {
     const video = document.getElementById('cameraVideo');
+
+    if (!cameraStream || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+      alert('The camera preview is not ready yet. Wait for the preview to appear, then press Capture.');
+      return;
+    }
+
+    if (selectedImages.length >= 4) {
+      alert('Max 4 images');
+      closeCamera();
+      return;
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg');
-    if (selectedImages.length >= 4) { alert('Max 4 images'); closeCamera(); return; }
-    selectedImages.push({ mimeType: 'image/jpeg', data: dataUrl.split(',')[1], previewUrl: dataUrl, id: Date.now()+Math.random() });
+    if (!ctx) {
+      alert('Vexel could not capture the camera frame.');
+      return;
+    }
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+
+    selectedImages.push({
+      mimeType: 'image/jpeg',
+      data: dataUrl.split(',')[1],
+      previewUrl: dataUrl,
+      id: Date.now() + Math.random()
+    });
+
     renderImagePreviews();
     saveDraft(activeChatId);
     closeCamera();
