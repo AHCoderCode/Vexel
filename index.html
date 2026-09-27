@@ -1280,7 +1280,38 @@ body.modal-open { overflow:hidden; }
   (function(){if(localStorage.getItem('vexel_theme')==='light')document.body.classList.add('light-mode');updateThemeIcon();})();
 
   function getInitials(username){const value=String(username||'V').trim();const parts=value.split(/[_\s-]+/).filter(Boolean);if(parts.length>=2)return `${parts[0][0]}${parts[1][0]}`.toUpperCase();return value.slice(0,2).toUpperCase();}
-  function updateAuthUI(){const loggedIn=Boolean(currentUser);const username=currentUser?.user_metadata?.username||currentUser?.email?.split('@')[0]||'User';const initials=getInitials(username);[profileAvatar,headerProfileAvatar].forEach(el=>{if(el)el.textContent=initials;});profileName.textContent=loggedIn?username:'Guest';profileState.textContent=loggedIn?'Signed in':'Not signed in';accountMenuName.textContent=loggedIn?username:'Guest';accountMenuEmail.textContent=loggedIn?(currentUser.email||'Vexel account'):'Not signed in';menuLoginLink.hidden=loggedIn;menuSignupLink.hidden=loggedIn;menuLogoutBtn.hidden=!loggedIn;document.getElementById('signupLink').style.display=loggedIn?'none':'inline-flex';document.getElementById('loginLink').style.display=loggedIn?'none':'inline-flex';updateLockButtonState();}
+  function updateAuthUI(){
+    const loggedIn = Boolean(currentUser);
+    const username = currentUser?.user_metadata?.username || currentUser?.email?.split('@')[0] || 'User';
+    const initials = getInitials(username);
+
+    [profileAvatar, headerProfileAvatar].forEach(el => {
+      if (el) el.textContent = initials;
+    });
+
+    profileName.textContent = loggedIn ? username : 'Guest';
+    profileState.textContent = loggedIn ? 'Signed in' : 'Not signed in';
+    accountMenuName.textContent = loggedIn ? username : 'Guest';
+    accountMenuEmail.textContent = loggedIn ? (currentUser.email || 'Vexel account') : 'Not signed in';
+
+    // Account-menu authentication actions:
+    // logged out -> Log in + Sign up
+    // logged in  -> Log out only
+    menuLoginLink.hidden = loggedIn;
+    menuSignupLink.hidden = loggedIn;
+    menuLogoutBtn.hidden = !loggedIn;
+    themeMenuBtn.hidden = loggedIn;
+
+    // Header authentication actions:
+    // logged out -> Log in + Sign up
+    // logged in  -> neither
+    const signupLink = document.getElementById('signupLink');
+    const loginLink = document.getElementById('loginLink');
+    if (signupLink) signupLink.hidden = loggedIn;
+    if (loginLink) loginLink.hidden = loggedIn;
+
+    updateLockButtonState();
+  }
   function toggleAccountMenu(forceOpen=null,fromHeader=false){const shouldOpen=forceOpen===null?accountMenu.hidden:forceOpen;accountMenu.hidden=!shouldOpen;accountMenu.classList.toggle('from-header',Boolean(fromHeader&&shouldOpen));profileButton.setAttribute('aria-expanded',String(shouldOpen));headerProfileButton?.setAttribute('aria-expanded',String(shouldOpen));}
   function closeAccountMenu(){accountMenu.hidden=true;accountMenu.classList.remove('from-header');profileButton.setAttribute('aria-expanded','false');headerProfileButton?.setAttribute('aria-expanded','false');}
   async function logout(){
