@@ -1,8 +1,8 @@
 (() => {
   const SUPABASE_URL = 'https://fevlfmlcfdwgpvabjzql.supabase.co';
 
-  const SUPABASE_ANON_KEY =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZldmxmbWxjZmR3Z3B2YWJxenFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NzQ2MjksImV4cCI6MjEwMjU1MDYyOX0.Fs0r4pwWPxfvHiMGDMyw5AFnjDo__iMY3ib49yMfLZM';
+  // PASTE YOUR CURRENT SUPABASE PUBLISHABLE KEY HERE
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_DNFvnqkMtzuZX2ySAmmtTg_D1kLYO9G';
 
   if (!window.supabase) {
     console.error('Supabase JS was not loaded.');
@@ -12,7 +12,7 @@
   if (!window.vexelSupabase) {
     window.vexelSupabase = window.supabase.createClient(
       SUPABASE_URL,
-      SUPABASE_ANON_KEY,
+      SUPABASE_PUBLISHABLE_KEY,
       {
         auth: {
           persistSession: true,
