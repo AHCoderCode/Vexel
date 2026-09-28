@@ -3,204 +3,253 @@
 
   /*
     ============================================================
-    VEXEL UI / NAVIGATION STABILITY PATCH
+    VEXEL UI FIXES
     ============================================================
-    This patch fixes:
-    - Login / signup navigation
-    - Mobile sidebar opening / closing
-    - Touch responsiveness
-    - Sidebar backdrop behavior
-    - Keyboard accessibility
-    - Auth-link navigation
-    - Defensive UI behavior
+    This file is intentionally lightweight.
+
+    The main index.html already contains the actual:
+    - sidebar logic
+    - auth navigation
+    - account menu logic
+    - chat interactions
+
+    This file only provides:
+    - mobile viewport-height handling
+    - safe sidebar fallback
+    - touch behavior
+    - accessibility helpers
+
+    IMPORTANT:
+    Do NOT add duplicate click handlers here.
   */
 
   const isMobile = () => window.innerWidth <= 768;
 
-  const get = (id) => document.getElementById(id);
+  /*
+    ============================================================
+    MOBILE VIEWPORT HEIGHT
+    ============================================================
+    Helps with mobile browsers and keyboard/open-address-bar
+    viewport changes.
+  */
 
-  function goTo(path) {
-    try {
-      window.location.assign(path);
-    } catch (error) {
-      console.error("Vexel navigation error:", error);
-      window.location.href = path;
-    }
+  function updateViewportHeight() {
+    const root = document.documentElement;
+    const viewport = window.visualViewport;
+
+    const height =
+      viewport && viewport.height
+        ? viewport.height
+        : window.innerHeight;
+
+    root.style.setProperty(
+      "--viewport-height",
+      `${height}px`
+    );
+  }
+
+  updateViewportHeight();
+
+  window.addEventListener(
+    "resize",
+    updateViewportHeight,
+    { passive: true }
+  );
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener(
+      "resize",
+      updateViewportHeight,
+      { passive: true }
+    );
+
+    window.visualViewport.addEventListener(
+      "scroll",
+      updateViewportHeight,
+      { passive: true }
+    );
   }
 
   /*
     ============================================================
-    HARD NAVIGATION
+    SIDEBAR FALLBACK
     ============================================================
-    Prevent other document handlers from interfering with
-    the login/signup links.
+    index.html already defines toggleSidebar().
+    We only create a fallback when it does not exist.
   */
 
-  document.addEventListener(
-    "click",
-    (event) => {
-      const link = event.target.closest("a[href]");
+  if (typeof window.toggleSidebar !== "function") {
+    window.toggleSidebar = function (forceState = null) {
+      const sidebar =
+        document.getElementById("sidebar");
 
-      if (!link) return;
+      const backdrop =
+        document.getElementById("mobileBackdrop");
 
-      const href = link.getAttribute("href");
+      const menuToggle =
+        document.getElementById("menuToggle");
 
-      if (!href) return;
-
-      const normalized = href
-        .replace(window.location.origin, "")
-        .split("?")[0]
-        .split("#")[0];
-
-      if (
-        normalized === "/login.html" ||
-        normalized === "login.html"
-      ) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-
-        goTo("/login.html");
+      if (!sidebar) {
         return;
       }
 
-      if (
-        normalized === "/signup.html" ||
-        normalized === "signup.html"
-      ) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
+      /*
+        Desktop:
+        sidebar should always remain visible.
+      */
 
-        goTo("/signup.html");
+      if (!isMobile()) {
+        sidebar.classList.remove("open");
+        sidebar.classList.remove("hidden");
+
+        if (backdrop) {
+          backdrop.classList.remove("active");
+        }
+
+        if (menuToggle) {
+          menuToggle.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+        }
+
         return;
       }
-    },
-    true
-  );
 
-  /*
-    ============================================================
-    MOBILE SIDEBAR
-    ============================================================
-  */
+      /*
+        Mobile:
+        calculate desired state.
+      */
 
-  function setSidebarState(open) {
-    const sidebar = get("sidebar");
-    const backdrop = get("mobileBackdrop");
-    const menuToggle = get("menuToggle");
-    const closeButton = get("closeSidebarBtn");
+      const shouldOpen =
+        forceState === null
+          ? !sidebar.classList.contains("open")
+          : Boolean(forceState);
 
-    if (!sidebar) return;
+      sidebar.classList.toggle(
+        "open",
+        shouldOpen
+      );
 
-    if (!isMobile()) {
-      sidebar.classList.remove("open");
       sidebar.classList.remove("hidden");
 
       if (backdrop) {
-        backdrop.classList.remove("active");
+        backdrop.classList.toggle(
+          "active",
+          shouldOpen
+        );
       }
 
       if (menuToggle) {
-        menuToggle.setAttribute("aria-expanded", "false");
+        menuToggle.setAttribute(
+          "aria-expanded",
+          String(shouldOpen)
+        );
+
+        menuToggle.setAttribute(
+          "aria-label",
+          shouldOpen
+            ? "Close sidebar"
+            : "Open sidebar"
+        );
       }
-
-      return;
-    }
-
-    sidebar.classList.toggle("open", open);
-    sidebar.classList.remove("hidden");
-
-    if (backdrop) {
-      backdrop.classList.toggle("active", open);
-    }
-
-    if (menuToggle) {
-      menuToggle.setAttribute(
-        "aria-expanded",
-        String(open)
-      );
-      menuToggle.setAttribute(
-        "aria-label",
-        open ? "Close sidebar" : "Open sidebar"
-      );
-    }
-
-    if (closeButton) {
-      closeButton.setAttribute(
-        "aria-expanded",
-        String(open)
-      );
-    }
-  }
-
-  function hardToggleSidebar(forceState = null) {
-    const sidebar = get("sidebar");
-
-    if (!sidebar) return;
-
-    if (!isMobile()) {
-      sidebar.classList.remove("hidden");
-      sidebar.classList.remove("open");
-      return;
-    }
-
-    const shouldOpen =
-      forceState === null
-        ? !sidebar.classList.contains("open")
-        : Boolean(forceState);
-
-    setSidebarState(shouldOpen);
+    };
   }
 
   /*
-    Replace the old global function used by inline onclick=""
-    attributes in index.html.
+    ============================================================
+    MOBILE BACKDROP SAFETY
+    ============================================================
+    Only attach this fallback when the main app has not already
+    installed its own handler.
   */
-  window.toggleSidebar = hardToggleSidebar;
+
+  const backdrop =
+    document.getElementById("mobileBackdrop");
+
+  if (backdrop && !backdrop.dataset.vexelFixBound) {
+    backdrop.dataset.vexelFixBound = "true";
+
+    backdrop.addEventListener(
+      "click",
+      () => {
+        if (typeof window.toggleSidebar === "function") {
+          window.toggleSidebar(false);
+        }
+      },
+      { passive: true }
+    );
+  }
 
   /*
-    The capture-phase listener prevents the old handler from
-    firing twice.
+    ============================================================
+    ESC KEY SAFETY
+    ============================================================
   */
-  const menuToggle = get("menuToggle");
 
-  if (menuToggle) {
-    menuToggle.addEventListener(
-      "click",
+  if (!document.documentElement.dataset.vexelEscapeBound) {
+    document.documentElement.dataset.vexelEscapeBound =
+      "true";
+
+    document.addEventListener(
+      "keydown",
       (event) => {
-        event.preventDefault();
-        event.stopImmediatePropagation();
+        if (event.key !== "Escape") {
+          return;
+        }
 
-        hardToggleSidebar();
-      },
-      true
-    );
-  }
+        /*
+          Close mobile sidebar.
+        */
 
-  const closeSidebarBtn = get("closeSidebarBtn");
+        if (isMobile()) {
+          const sidebar =
+            document.getElementById("sidebar");
 
-  if (closeSidebarBtn) {
-    closeSidebarBtn.addEventListener(
-      "click",
-      (event) => {
-        event.preventDefault();
-        event.stopImmediatePropagation();
+          if (
+            sidebar &&
+            sidebar.classList.contains("open")
+          ) {
+            if (
+              typeof window.toggleSidebar ===
+              "function"
+            ) {
+              window.toggleSidebar(false);
+            }
+          }
+        }
 
-        setSidebarState(false);
-      },
-      true
-    );
-  }
+        /*
+          Close plus menu.
+        */
 
-  const mobileBackdrop = get("mobileBackdrop");
+        const plusMenu =
+          document.getElementById("plusMenu");
 
-  if (mobileBackdrop) {
-    mobileBackdrop.addEventListener(
-      "click",
-      (event) => {
-        event.preventDefault();
-        event.stopPropagation();
+        if (
+          plusMenu &&
+          plusMenu.classList.contains("active") &&
+          typeof window.togglePlusMenu ===
+            "function"
+        ) {
+          window.togglePlusMenu(false);
+        }
 
-        setSidebarState(false);
+        /*
+          Close account menu.
+        */
+
+        const accountMenu =
+          document.getElementById("accountMenu");
+
+        if (
+          accountMenu &&
+          !accountMenu.hidden &&
+          typeof window.closeAccountMenu ===
+            "function"
+        ) {
+          window.closeAccountMenu();
+        }
       },
       true
     );
@@ -208,30 +257,29 @@
 
   /*
     ============================================================
-    TOUCH SUPPORT
+    TOUCH OPTIMIZATION
     ============================================================
   */
 
-  const style = document.createElement("style");
+  const touchStyle =
+    document.createElement("style");
 
-  style.id = "vexelInteractionFixes";
+  touchStyle.id =
+    "vexelUiTouchFixes";
 
-  style.textContent = `
+  touchStyle.textContent = `
     button,
     a,
+    input,
+    textarea,
     .chat-list-item,
     .profile-button,
-    .tool-icon-btn,
-    .new-chat-btn,
-    .send-btn,
     .menu-item,
-    .auth-link {
+    .tool-icon-btn,
+    .plus-menu-item,
+    .send-btn {
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
-    }
-
-    .sidebar {
-      pointer-events: auto !important;
     }
 
     .chat-list-item {
@@ -239,160 +287,68 @@
       -webkit-user-select: none;
     }
 
-    #menuToggle,
-    #closeSidebarBtn,
-    #profileButton,
-    #headerProfileButton {
-      pointer-events: auto !important;
+    @media (max-width: 768px) {
+      button,
+      .chat-list-item,
+      .menu-item,
+      .plus-menu-item {
+        min-height: 40px;
+      }
     }
   `;
 
-  document.head.appendChild(style);
+  /*
+    Prevent duplicate style injection.
+  */
+
+  if (!document.getElementById("vexelUiTouchFixes")) {
+    document.head.appendChild(touchStyle);
+  }
 
   /*
     ============================================================
-    RESPONSIVE SIDEBAR STATE
+    RESPONSIVE SIDEBAR CLEANUP
     ============================================================
+    When resizing from mobile -> desktop, make sure the drawer
+    does not remain stuck open.
   */
 
   window.addEventListener(
     "resize",
     () => {
+      const sidebar =
+        document.getElementById("sidebar");
+
+      const backdrop =
+        document.getElementById("mobileBackdrop");
+
+      if (!sidebar) {
+        return;
+      }
+
       if (!isMobile()) {
-        setSidebarState(false);
-      }
-    },
-    {
-      passive: true
-    }
-  );
+        sidebar.classList.remove("open");
+        sidebar.classList.remove("hidden");
 
-  /*
-    ============================================================
-    ESCAPE KEY
-    ============================================================
-  */
-
-  document.addEventListener(
-    "keydown",
-    (event) => {
-      if (event.key !== "Escape") return;
-
-      if (isMobile()) {
-        const sidebar = get("sidebar");
-
-        if (sidebar?.classList.contains("open")) {
-          setSidebarState(false);
+        if (backdrop) {
+          backdrop.classList.remove("active");
         }
       }
     },
-    true
+    { passive: true }
   );
-
-  /*
-    ============================================================
-    CHAT ROW TOUCH / CLICK SAFETY
-    ============================================================
-    Existing chat rows already have their own click handler.
-    This simply makes sure they are treated as interactive
-    controls on touch devices.
-  */
-
-  const chatList = get("chatList");
-
-  if (chatList) {
-    chatList.addEventListener(
-      "pointerup",
-      (event) => {
-        const row = event.target.closest(".chat-list-item");
-
-        if (!row) return;
-
-        /*
-          Do not interfere with the context-menu button,
-          checkbox, or bulk-selection controls.
-        */
-        if (
-          event.target.closest(".chat-row-menu-btn") ||
-          event.target.closest("input") ||
-          event.target.closest(".chat-actions")
-        ) {
-          return;
-        }
-
-        row.style.webkitTapHighlightColor = "transparent";
-      },
-      {
-        passive: true
-      }
-    );
-  }
-
-  /*
-    ============================================================
-    AUTH BUTTON SAFETY
-    ============================================================
-  */
-
-  function attachAuthNavigation(id, path) {
-    const element = get(id);
-
-    if (!element) return;
-
-    element.addEventListener(
-      "click",
-      (event) => {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-
-        goTo(path);
-      },
-      true
-    );
-  }
-
-  attachAuthNavigation(
-    "loginLink",
-    "/login.html"
-  );
-
-  attachAuthNavigation(
-    "signupLink",
-    "/signup.html"
-  );
-
-  attachAuthNavigation(
-    "menuLoginLink",
-    "/login.html"
-  );
-
-  attachAuthNavigation(
-    "menuSignupLink",
-    "/signup.html"
-  );
-
-  /*
-    ============================================================
-    INITIAL STATE
-    ============================================================
-  */
-
-  if (isMobile()) {
-    setSidebarState(false);
-  }
 
   /*
     ============================================================
     DEBUGGING
     ============================================================
-    These make future frontend errors much easier to identify.
   */
 
   window.addEventListener(
     "error",
     (event) => {
       console.error(
-        "[Vexel frontend error]",
+        "[Vexel UI Error]",
         event.error || event.message
       );
     }
@@ -402,7 +358,7 @@
     "unhandledrejection",
     (event) => {
       console.error(
-        "[Vexel unhandled promise rejection]",
+        "[Vexel UI Promise Error]",
         event.reason
       );
     }
