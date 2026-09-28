@@ -413,5 +413,14 @@ form{display:grid;gap:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 
     })();
   </script>
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js", {
+        scope: "/"
+      });
+    });
+  }
+</script>
 </body>
 </html>
