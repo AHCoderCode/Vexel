@@ -1452,6 +1452,28 @@ body.modal-open { overflow:hidden; }
 </script>
 
 <script src="vexel-ui-fixes.js"></script>
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js", {
+          scope: "/"
+        })
+        .then((registration) => {
+          console.log(
+            "Vexel service worker registered:",
+            registration.scope
+          );
+        })
+        .catch((error) => {
+          console.error(
+            "Vexel service worker registration failed:",
+            error
+          );
+        });
+    });
+  }
+</script>
 
 </body>
 </html>
