@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Vexel AI">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#292345"/>
+      <stop offset="1" stop-color="#171725"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c5baff"/>
+      <stop offset=".52" stop-color="#9584ff"/>
+      <stop offset="1" stop-color="#6b5be7"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#080711" flood-opacity=".35"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <circle cx="256" cy="245" r="172" fill="#8b7cf6" opacity=".08"/>
+  <path d="M92 116h66l98 222 98-222h66L281 399h-50z" fill="url(#violet)" filter="url(#shadow)"/>
+  <path d="M203 116h48l-22 47h-47zM283 116h48l-22 47h-47z" fill="#e2dcff" opacity=".96"/>
+  <circle cx="382" cy="137" r="13" fill="#e2dcff"/>
+  <circle cx="407" cy="171" r="6" fill="#9584ff"/>
+</svg>
