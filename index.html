@@ -307,7 +307,7 @@ a { color: inherit; text-decoration: none; }
 .plus-menu-item { min-width:0; display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; background:transparent; border:0; color:var(--text-2); font-size:12px; text-align:left; }
 .plus-menu-item:hover { background:var(--surface-2); color:var(--text); }
 .plus-menu-item .icon { width:21px; height:21px; display:grid; place-items:center; border-radius:6px; background:var(--surface-2); color:var(--text-2); font-size:12px; }
-.footer-note { text-align:center; color:var(--muted); font-size:10px; padding:6px 0 0; }
+.footer-note { text-align:center; color:var(--muted); font-size:10px; padding:6px 0 0; line-height:1.5; } .footer-note a { color:var(--text-2); text-decoration:underline; text-underline-offset:2px; }
 
 .scroll-bottom-btn { position:fixed; right:22px; bottom:101px; width:36px; height:36px; border:1px solid var(--border-strong); border-radius:50%; background:var(--surface); color:var(--text); box-shadow:0 8px 20px rgba(0,0,0,.18); display:none; place-items:center; z-index:24; }
 .scroll-bottom-btn.visible { display:grid; }
@@ -559,7 +559,7 @@ body.modal-open { overflow:hidden; }
           <button class="plus-menu-item" type="button" role="menuitem" onclick="openCamera(); togglePlusMenu(false);"><span class="icon">▣</span><span>Camera</span></button>
           <button class="plus-menu-item" type="button" role="menuitem" onclick="generateImage(); togglePlusMenu(false);"><span class="icon">✦</span><span>Create image</span></button>
         </div>
-        <div class="footer-note">Vexel can make mistakes. Check important information.</div>
+        <div class="footer-note">Vexel can make mistakes. Check important information. <a href="/about.html">About</a> · <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a></div>
       </div>
     </div>
   </main>
