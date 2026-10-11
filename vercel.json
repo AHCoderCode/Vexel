@@ -12,8 +12,14 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api/.*|.*\\.html$).*)",
+      "source": "/((?!api/.*|.*\\.html$|.*\\.[^/]+$).*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/gemini.js": {
+      "maxDuration": 60
+    }
+  }
 }
