@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "vexel-app-v3";
+const CACHE_NAME = "vexel-app-v4";
 
 const APP_SHELL = [
   "/",
