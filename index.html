@@ -733,7 +733,8 @@ body.modal-open { overflow:hidden; }
       if (token === initToken) {
         appInitialized = true;
         appLoading.hidden = true;
-        promptInput.focus();
+        // Never open the mobile keyboard automatically during initial page load.
+        if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) promptInput.focus();
       }
     }
   }
