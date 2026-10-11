@@ -2,10 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Vexel AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Vexel AI — Your Everyday AI Assistant</title>
+  <meta name="description" content="Meet Vexel AI, your everyday AI assistant for writing, learning, brainstorming, coding, and exploring ideas in a clean, responsive chat experience.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="keywords" content="Vexel AI, Vexel assistant, AI chat assistant, AI writing assistant, coding assistant, learning assistant">
+  <link rel="canonical" href="https://vexelai-zeta.vercel.app/">
+  <link rel="icon" href="/icons/vexel-icon.svg" type="image/svg+xml">
   <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#212121">
+  <meta name="theme-color" content="#212121">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Vexel AI">
+  <meta property="og:title" content="Vexel AI — Your Everyday AI Assistant">
+  <meta property="og:description" content="A helpful AI assistant for writing, learning, brainstorming, coding, and understanding ideas.">
+  <meta property="og:url" content="https://vexelai-zeta.vercel.app/">
+  <meta property="og:image" content="https://vexelai-zeta.vercel.app/icons/icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Vexel AI — Your Everyday AI Assistant">
+  <meta name="twitter:description" content="A helpful AI assistant for writing, learning, brainstorming, coding, and understanding ideas.">
+  <meta name="twitter:image" content="https://vexelai-zeta.vercel.app/icons/icon-512.png">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"WebApplication","name":"Vexel AI","alternateName":"Vexel","url":"https://vexelai-zeta.vercel.app/","applicationCategory":"ProductivityApplication","operatingSystem":"Web","description":"A helpful AI assistant for writing, learning, brainstorming, coding, and understanding ideas."}
+  </script>
 
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
@@ -27,7 +45,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <!-- SHA256 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0"></script>
 <script src="supabaseClient.js"></script>
   <style>
 :root {
@@ -111,12 +129,14 @@ a { color: inherit; text-decoration: none; }
 }
 #appLoading[hidden] { display: none; }
 .loading-card { text-align: center; font-size: 13px; }
-.loading-mark {
-  width: 28px; height: 28px; margin: 0 auto 12px;
-  border: 2.5px solid var(--border-strong); border-top-color: var(--accent);
-  border-radius: 50%; animation: spin .72s linear infinite;
-}
+.loading-card { display:grid; justify-items:center; gap:10px; padding:24px; }
+.loading-brand-mark { width:60px;height:60px;border-radius:19px;display:grid;place-items:center;background:linear-gradient(145deg,#a394ff,#5f50c8);box-shadow:0 12px 40px #8b7cf62b;color:#fff;font-size:30px;font-weight:800;animation:brandPulse 1.4s ease-in-out infinite; }
+.loading-mark { width:25px;height:25px;border:2.5px solid var(--border-strong);border-top-color:var(--accent);border-radius:50%;animation:spin .72s linear infinite; }
+.loading-caption { font-size:12px;color:var(--muted); }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes brandPulse { 0%,100%{transform:scale(1);box-shadow:0 12px 40px #8b7cf62b}50%{transform:scale(1.045);box-shadow:0 16px 46px #8b7cf63b} }
+@media (max-width:768px) { #appLoading { padding:var(--safe-top) 16px var(--safe-bottom); } .loading-brand-mark{width:56px;height:56px;border-radius:17px} }
+@media (prefers-reduced-motion:reduce) { .loading-brand-mark { animation:none; } }
 
 .app-shell { position: relative; display: flex; width: 100%; height: var(--viewport-height); min-width: 0; }
 
@@ -287,7 +307,7 @@ a { color: inherit; text-decoration: none; }
 .plus-menu-item { min-width:0; display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; background:transparent; border:0; color:var(--text-2); font-size:12px; text-align:left; }
 .plus-menu-item:hover { background:var(--surface-2); color:var(--text); }
 .plus-menu-item .icon { width:21px; height:21px; display:grid; place-items:center; border-radius:6px; background:var(--surface-2); color:var(--text-2); font-size:12px; }
-.footer-note { text-align:center; color:var(--muted); font-size:10px; padding:6px 0 0; }
+.footer-note { text-align:center; color:var(--muted); font-size:10px; padding:6px 0 0; line-height:1.5; } .footer-note a { color:var(--text-2); text-decoration:underline; text-underline-offset:2px; }
 
 .scroll-bottom-btn { position:fixed; right:22px; bottom:101px; width:36px; height:36px; border:1px solid var(--border-strong); border-radius:50%; background:var(--surface); color:var(--text); box-shadow:0 8px 20px rgba(0,0,0,.18); display:none; place-items:center; z-index:24; }
 .scroll-bottom-btn.visible { display:grid; }
@@ -363,6 +383,9 @@ body.modal-open { overflow:hidden; }
   .sidebar.hidden { transform:translateX(-100%); }
   .close-sidebar-btn { display:grid; }
   .header { padding-left:7px; padding-right:7px; }
+  .menu-toggle { display:grid !important; flex:0 0 36px; }
+  .header-actions { gap:2px; }
+  .header-actions > .auth-link.desktop-only { display:inline-flex; align-items:center; padding:7px 7px; font-size:11px; white-space:nowrap; }
   .header h1 { font-size:14px; }
   .header-subtitle { display:none; }
   .messages { padding:8px 12px calc(148px + var(--safe-bottom)); }
@@ -377,6 +400,8 @@ body.modal-open { overflow:hidden; }
   .account-menu { left:8px; bottom:calc(61px + var(--safe-bottom)); }
 }
 @media (max-width: 430px) {
+  .header-actions > .auth-link.desktop-only { padding:6px 5px; font-size:10px; }
+  .header-actions .header-profile { width:34px !important; min-width:34px; height:36px; }
   .messages { padding-left:10px; padding-right:10px; }
   .message { font-size:14px; line-height:1.62; }
   .message.user { max-width:92%; padding:9px 12px; }
@@ -393,11 +418,37 @@ body.modal-open { overflow:hidden; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
+  .install-banner { position:fixed; z-index:950; right:16px; bottom:calc(16px + var(--safe-bottom)); width:min(360px,calc(100vw - 24px)); padding:14px; border:1px solid var(--border-strong); border-radius:16px; background:var(--surface); box-shadow:0 16px 50px rgba(0,0,0,.4); display:none; gap:12px; align-items:flex-start; }
+  .install-banner.visible { display:flex; animation:messageIn .18s ease; }
+  .install-icon { flex:0 0 42px;width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#a394ff,#5f50c8);display:grid;place-items:center;color:white;font-weight:850;font-size:21px; }
+  .install-copy { min-width:0; flex:1; } .install-copy strong { font-size:13px;display:block;margin:1px 0 3px; } .install-copy p { font-size:11px;line-height:1.45;color:var(--text-2);margin:0; }
+  .install-actions { display:flex;align-items:center;gap:7px;margin-top:9px; } .install-actions button { padding:7px 10px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-size:11px;font-weight:700; }
+  .install-dismiss { background:transparent !important;color:var(--muted) !important;padding:5px !important; }
+  .profile-field { display:block;width:100%;height:42px;margin:7px 0 15px;padding:0 11px;border:1px solid var(--border-strong);border-radius:9px;background:var(--surface-2);color:var(--text); }
+  .profile-label { display:block;font-size:12px;font-weight:650;color:var(--text-2);margin-top:12px; }
+  .profile-modal-error { color:var(--danger);font-size:12px;min-height:18px;margin-bottom:9px; }
+  .modal-buttons .primary-action { background:var(--accent);color:#fff;border-color:transparent; }
+  .legal-consent { display:flex;align-items:flex-start;gap:9px;font-size:11px;line-height:1.5;color:var(--muted); }
+  .legal-consent input { margin-top:3px;accent-color:var(--accent);flex:0 0 auto; }
+  .legal-consent a { color:#b8afff;text-decoration:underline;text-underline-offset:2px; }
+  @media (max-width:768px) { .install-banner { left:12px;right:12px;bottom:calc(12px + var(--safe-bottom));width:auto; } }
 </style>
 </head>
 <body>
+<noscript><main style="max-width:760px;margin:40px auto;padding:20px;color:#f7f7f8;font:16px/1.6 system-ui"><h1>Vexel AI — Your Everyday AI Assistant</h1><p>Vexel is an AI chat assistant for writing, learning, brainstorming, coding, and exploring ideas. Enable JavaScript to use the interactive assistant.</p><p><a href="/terms.html">Terms of Service</a> · <a href="/privacy.html">Privacy Policy</a></p></main></noscript>
 <div id="appLoading">
-  <div class="loading-card"><div class="loading-mark"></div><div>Loading Vexel…</div></div>
+  <div class="loading-card"><div class="loading-brand-mark" aria-hidden="true">V</div><div class="loading-mark" aria-hidden="true"></div><div><strong>Vexel AI</strong></div><div class="loading-caption">Preparing your workspace…</div></div>
+</div>
+<div class="install-banner" id="installBanner" role="dialog" aria-label="Install Vexel">
+  <div class="install-icon" aria-hidden="true">V</div>
+  <div class="install-copy">
+    <strong>Install Vexel AI</strong>
+    <p id="installBannerText">Add Vexel to your device for a faster, app-like experience.</p>
+    <div class="install-actions">
+      <button type="button" id="installNowBtn">Install app</button>
+      <button type="button" class="install-dismiss" id="installLaterBtn">Not now</button>
+    </div>
+  </div>
 </div>
 <div class="app-shell" id="appShell" aria-hidden="true">
   <div class="mobile-backdrop" id="mobileBackdrop" aria-hidden="true"></div>
@@ -437,6 +488,8 @@ body.modal-open { overflow:hidden; }
       </button>
       <div class="account-menu" id="accountMenu" hidden role="menu" aria-label="Account menu">
         <div class="account-menu-header"><div class="account-menu-name" id="accountMenuName">Guest</div><div class="account-menu-email" id="accountMenuEmail">Not signed in</div></div>
+        <button class="menu-item" type="button" role="menuitem" id="personalizeProfileBtn" onclick="openProfileModal(); closeAccountMenu();" hidden>Personalize profile</button>
+        <button class="menu-item" type="button" role="menuitem" id="menuPasskeyBtn" onclick="createPasskey()" hidden>Create a passkey</button>
         <button class="menu-item" type="button" role="menuitem" id="themeMenuBtn" onclick="toggleTheme(); closeAccountMenu();">
           <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M16.5 12a4.5 4.5 0 1 1-5.8-4.3A5.5 5.5 0 0 0 16.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           <span id="themeMenuLabel">Switch theme</span>
@@ -506,10 +559,26 @@ body.modal-open { overflow:hidden; }
           <button class="plus-menu-item" type="button" role="menuitem" onclick="openCamera(); togglePlusMenu(false);"><span class="icon">▣</span><span>Camera</span></button>
           <button class="plus-menu-item" type="button" role="menuitem" onclick="generateImage(); togglePlusMenu(false);"><span class="icon">✦</span><span>Create image</span></button>
         </div>
-        <div class="footer-note">Vexel can make mistakes. Check important information.</div>
+        <div class="footer-note">Vexel can make mistakes. Check important information. <a href="/about.html">About</a> · <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a></div>
       </div>
     </div>
   </main>
+</div>
+
+<!-- Profile personalization modal -->
+<div class="modal-overlay" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+  <div class="modal-box">
+    <h2 id="profileModalTitle" style="font-size:20px;margin-bottom:6px;">Personalize your profile</h2>
+    <p>Choose the name and avatar colour shown in Vexel. Your sign-in username will not change.</p>
+    <label class="profile-label" for="profileDisplayNameInput">Display name</label>
+    <input class="profile-field" id="profileDisplayNameInput" maxlength="32" autocomplete="nickname" placeholder="How should Vexel display your name?">
+    <label class="profile-label" for="profileAccentInput">Avatar colour</label>
+    <select class="profile-field" id="profileAccentInput">
+      <option value="#8b7cf6">Violet</option><option value="#4f91ff">Blue</option><option value="#24a98a">Teal</option><option value="#d76a9e">Rose</option><option value="#e49b45">Amber</option>
+    </select>
+    <div class="profile-modal-error" id="profileModalError" aria-live="polite"></div>
+    <div class="modal-buttons"><button type="button" onclick="closeProfileModal()">Cancel</button><button type="button" class="primary-action" id="saveProfileButton" onclick="saveProfile()">Save changes</button></div>
+  </div>
 </div>
 
 <!-- Delete modal -->
@@ -587,6 +656,8 @@ body.modal-open { overflow:hidden; }
   const menuLoginLink = document.getElementById('menuLoginLink');
   const menuSignupLink = document.getElementById('menuSignupLink');
   const menuLogoutBtn = document.getElementById('menuLogoutBtn');
+  const menuPasskeyBtn = document.getElementById('menuPasskeyBtn');
+  const personalizeProfileBtn = document.getElementById('personalizeProfileBtn');
 
   let isWaiting = false;
   let selectedImages = [];
@@ -595,6 +666,7 @@ body.modal-open { overflow:hidden; }
   let chatHistory = [];
   let lastUserPrompt = null;
   let lastUserParts = null;
+  let lastTurnCommitted = false;
   let pendingDeleteChatId = null;
   let isIncognito = false;
   let recognition = null;
@@ -661,7 +733,8 @@ body.modal-open { overflow:hidden; }
       if (token === initToken) {
         appInitialized = true;
         appLoading.hidden = true;
-        promptInput.focus();
+        // Never open the mobile keyboard automatically during initial page load.
+        if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) promptInput.focus();
       }
     }
   }
@@ -945,7 +1018,7 @@ body.modal-open { overflow:hidden; }
     if (previousId && previousId !== chatId) unlockedChats.delete(previousId);
     activeChatId = chatId;
     if (currentUser) localStorage.setItem(activeChatStorageKey(), chatId);
-    lastUserPrompt = null; lastUserParts = null;
+    lastUserPrompt = null; lastUserParts = null; lastTurnCommitted = false;
     loadActiveChat();
     renderChatList();
     if (window.innerWidth <= 768) toggleSidebar(false);
@@ -1350,63 +1423,212 @@ body.modal-open { overflow:hidden; }
   }
 
   // ========== SEND MESSAGE ==========
-  async function sendMessage(regenerating=false){
-    if(isWaiting)return;
-    const prompt=promptInput.value.trim();
-    if((!prompt&&selectedImages.length===0&&!regenerating))return;
-    if(!activeChatId&&!isIncognito){await createNewChat(true);if(!activeChatId)return;}
-    isWaiting=true;sendBtn.disabled=true;promptInput.disabled=true;removeTyping();
-    let userParts=[];
-    try{
-      if(!regenerating){
-        if(prompt)userParts.push({text:prompt});
-        selectedImages.forEach(img=>userParts.push({inline_data:{mime_type:img.mimeType,data:img.data}}));
-        const safePrompt=escapeHtml(prompt).replace(/\n/g,'<br>');
-        const safeImages=selectedImages.map(img=>`<img src="${img.previewUrl}" class="chat-img" alt="Attachment">`).join('');
-        renderMessage('user',safePrompt+safeImages,null,true,true);
-        promptInput.value='';promptInput.style.height='44px';selectedImages=[];renderImagePreviews();
-        saveDraft(activeChatId);lastUserPrompt=prompt;lastUserParts=userParts;
-      }else{
-        if(chatHistory.at(-1)?.role==='model'){chatHistory.pop();getChatById(activeChatId).messages=chatHistory;await queueCloudSave(activeChatId);const lastAssistant=messagesDiv.querySelector('.message.assistant:last-of-type');lastAssistant?.remove();}
-        userParts=lastUserParts||[];
+  async function sendMessage(regenerating=false) {
+    if (isWaiting) return;
+    const prompt = promptInput.value.trim();
+    if (!prompt && selectedImages.length === 0 && !regenerating) return;
+    const regeneratingCommittedTurn = Boolean(regenerating && lastTurnCommitted);
+
+    if (!regenerating && !activeChatId && !isIncognito) {
+      await createNewChat(true);
+      if (!activeChatId) return;
+    }
+
+    isWaiting = true;
+    sendBtn.disabled = true;
+    promptInput.disabled = true;
+    removeTyping();
+    let userParts = [];
+
+    try {
+      if (!regenerating) {
+        lastTurnCommitted = false;
+        if (prompt) userParts.push({ text: prompt });
+        selectedImages.forEach((img) => userParts.push({
+          inline_data: { mime_type: img.mimeType, data: img.data }
+        }));
+        const safePrompt = escapeHtml(prompt).replace(/\n/g, '<br>');
+        const safeImages = selectedImages.map((img) =>
+          `<img src="${img.previewUrl}" class="chat-img" alt="Attachment">`
+        ).join('');
+        renderMessage('user', safePrompt + safeImages, null, true, true);
+        promptInput.value = '';
+        promptInput.style.height = '44px';
+        selectedImages = [];
+        renderImagePreviews();
+        saveDraft(activeChatId);
+        lastUserPrompt = prompt;
+        lastUserParts = userParts;
+      } else {
+        if (regeneratingCommittedTurn && chatHistory.at(-1)?.role === 'model') {
+          chatHistory.pop();
+          const chat = getChatById(activeChatId);
+          if (chat) chat.messages = chatHistory;
+          await queueCloudSave(activeChatId);
+        }
+        // Remove the most recent assistant response/error from the visual thread.
+        messagesDiv.querySelector('.message.assistant:last-of-type')?.remove();
+        userParts = lastUserParts || [];
       }
+
       showTyping();
-      const payload={prompt:regenerating?(lastUserPrompt||''):prompt,history:regenerating?chatHistory:[...chatHistory,{role:'user',parts:userParts}],images:regenerating?(lastUserParts||[]).filter(p=>p.inline_data).map(p=>({mimeType:p.inline_data.mime_type,data:p.inline_data.data})):[]};
-      const res=await fetch('/api/gemini',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-      let data=null;try{data=await res.json();}catch{data={error:{message:'The AI returned an invalid response.'}};}
+      const requestHistory = regeneratingCommittedTurn ? chatHistory.slice(0, -1) : chatHistory;
+      const payload = {
+        prompt: regenerating ? (lastUserPrompt || '') : prompt,
+        history: requestHistory,
+        images: userParts.filter((part) => part.inline_data).map((part) => ({
+          mimeType: part.inline_data.mime_type,
+          data: part.inline_data.data
+        }))
+      };
+
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => ({
+        error: { message: 'The AI returned an invalid response. Please try again.' }
+      }));
+
       removeTyping();
-      if(!res.ok||data.error){renderMessage('assistant',escapeHtml(data?.error?.message||'Vexel could not complete the request.'),null,true,false);return;}
-      const reply=data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if(typeof reply!=='string'){renderMessage('assistant','Vexel returned an unexpected response. Please try again.',null,true,false);return;}
-      renderMessage('assistant',reply,null,true,false);
-      if(!regenerating)chatHistory.push({role:'user',parts:userParts});
-      chatHistory.push({role:'model',parts:[{text:reply}]});
-      const chat=getChatById(activeChatId);
-      if(chat&&!isIncognito){chat.messages=chatHistory;if(chat.title==='New Chat'){const first=chatHistory.find(m=>m.role==='user');const firstText=first?.parts?.find(p=>p.text)?.text;chat.title=firstText?firstText.replace(/\s+/g,' ').trim().slice(0,70):'File chat';}chat.updatedAt=Date.now();renderChatList();await queueCloudSave(activeChatId);}
-    }catch(error){console.error('Send message error:',error);removeTyping();renderMessage('assistant',escapeHtml(error?.message?.toLowerCase().includes('network')?'Network error. Check your connection and try again.':'Vexel could not complete that request. Please try again.'),null,true,false);}finally{isWaiting=false;sendBtn.disabled=false;promptInput.disabled=false;promptInput.focus();}
+      if (!res.ok || data.error) {
+        const message = data?.error?.message ||
+          (res.status === 429
+            ? 'Vexel is receiving too many requests. Please wait a moment and try again.'
+            : 'Vexel could not complete the request. Please try again.');
+        renderMessage('assistant', escapeHtml(message), null, true, false);
+        return;
+      }
+
+      const reply = data.candidates?.[0]?.content?.parts?.find((part) => typeof part.text === 'string')?.text;
+      if (typeof reply !== 'string') {
+        renderMessage('assistant', 'Vexel returned an unexpected response. Please try again.', null, true, false);
+        return;
+      }
+
+      renderMessage('assistant', reply, null, true, false);
+      if (!regenerating || !regeneratingCommittedTurn) {
+        chatHistory.push({ role: 'user', parts: userParts });
+      }
+      chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+      lastTurnCommitted = true;
+
+      const chat = getChatById(activeChatId);
+      if (chat && !isIncognito) {
+        chat.messages = chatHistory;
+        if (chat.title === 'New Chat') {
+          const first = chatHistory.find((message) => message.role === 'user');
+          const firstText = first?.parts?.find((part) => part.text)?.text;
+          chat.title = firstText ? firstText.replace(/\s+/g, ' ').trim().slice(0, 70) : 'File chat';
+        }
+        chat.updatedAt = Date.now();
+        renderChatList();
+        await queueCloudSave(activeChatId);
+      }
+    } catch (error) {
+      console.error('Send message error:', error);
+      removeTyping();
+      const message = error?.message?.toLowerCase().includes('network')
+        ? 'Network error. Check your connection and try again.'
+        : 'Vexel could not complete that request. Please try again.';
+      renderMessage('assistant', escapeHtml(message), null, true, false);
+    } finally {
+      isWaiting = false;
+      sendBtn.disabled = false;
+      promptInput.disabled = false;
+      promptInput.focus();
+    }
   }
   async function saveCurrentChat(chatId=activeChatId){if(!chatId||isIncognito||!currentUser)return;const chat=getChatById(chatId);if(!chat)return;chat.messages=chatId===activeChatId?chatHistory:chat.messages;chat.updatedAt=Date.now();if(chat.title==='New Chat'&&chat.messages.length){const first=chat.messages.find(m=>m.role==='user');const text=first?.parts?.find(p=>p.text)?.text;chat.title=text?text.replace(/\s+/g,' ').trim().slice(0,70):'File chat';}try{await queueCloudSave(chatId);renderChatList();}catch(error){console.error('Save chat error:',error);throw error;}}
   function saveCurrentChatIfNeeded(){return saveCurrentChat(activeChatId);}
-  function regenerateResponse(){if(isWaiting)return;if(!lastUserPrompt&&!(chatHistory.find(m=>m.role==='user'))){return;}sendMessage(true);}
+  function regenerateResponse() {
+    if (isWaiting) return;
+    let latestUser = null;
+    for (let n = chatHistory.length - 1; n >= 0; n--) {
+      if (chatHistory[n]?.role === 'user') { latestUser = chatHistory[n]; break; }
+    }
+    if (!latestUser) return;
+    lastUserPrompt = latestUser.parts?.find((part) => typeof part.text === 'string')?.text || '';
+    lastUserParts = Array.isArray(latestUser.parts) ? latestUser.parts : [];
+    // Recalculate for the active conversation; switching chats must not leave stale state.
+    lastTurnCommitted = chatHistory.at(-1)?.role === 'model';
+    sendMessage(true);
+  }
   async function clearCurrentChat(){if(isWaiting||!activeChatId)return;if(!confirm('Clear this conversation?'))return;chatHistory=[];const chat=getChatById(activeChatId);if(chat){chat.messages=[];chat.updatedAt=Date.now();try{await queueCloudSave(activeChatId);}catch(error){console.error('Clear chat error:',error);alert('The chat could not be cleared.');return;}}clearDraftUI();renderAllMessages();renderChatList();}
   function toggleFeedback(type,button){const key=feedbackStorageKey();if(!key||!activeChatId||isIncognito)return;let feedback={};try{feedback=JSON.parse(localStorage.getItem(key)||'{}');}catch{feedback={};}const assistantNodes=[...messagesDiv.querySelectorAll('.message.assistant')];const index=assistantNodes.indexOf(button.closest('.message.assistant'));const feedbackKey=`${activeChatId}:${index}`;feedback[feedbackKey]=feedback[feedbackKey]===type?null:type;localStorage.setItem(key,JSON.stringify(feedback));button.classList.toggle(type==='like'?'liked':'disliked',feedback[feedbackKey]===type);const sibling=type==='like'?button.nextElementSibling:button.previousElementSibling;sibling?.classList.remove(type==='like'?'disliked':'liked');}
   function toggleTheme(){document.body.classList.toggle('light-mode');const theme=document.body.classList.contains('light-mode')?'light':'dark';localStorage.setItem('vexel_theme',theme);updateThemeIcon();}
   function updateThemeIcon(){const light=document.body.classList.contains('light-mode');const button=document.getElementById('themeHeaderBtn');if(button)button.setAttribute('aria-label',light?'Switch to dark theme':'Switch to light theme');const label=document.getElementById('themeMenuLabel');if(label)label.textContent=light?'Use dark theme':'Use light theme';}
   (function(){if(localStorage.getItem('vexel_theme')==='light')document.body.classList.add('light-mode');updateThemeIcon();})();
 
+  (() => {
+    const banner = document.getElementById('installBanner');
+    const installButton = document.getElementById('installNowBtn');
+    const laterButton = document.getElementById('installLaterBtn');
+    const bannerText = document.getElementById('installBannerText');
+    let deferredInstallPrompt = null;
+    const installed = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    const chromeBrowser = /Chrome|CriOS/i.test(navigator.userAgent) && !/Edg|OPR|SamsungBrowser/i.test(navigator.userAgent);
+    const dismissalKey = 'vexel-install-dismissed-at';
+    const dismissedRecently = () => {
+      try { return Date.now() - Number(localStorage.getItem(dismissalKey) || 0) < 7 * 24 * 60 * 60 * 1000; }
+      catch { return false; }
+    };
+    const showBanner = () => {
+      if (!banner || installed() || !chromeBrowser || dismissedRecently()) return;
+      if (deferredInstallPrompt) {
+        installButton.textContent = 'Install app';
+        bannerText.textContent = 'Add Vexel to your device for a faster, app-like experience.';
+      } else {
+        installButton.textContent = 'How to install';
+        bannerText.textContent = 'In Chrome, open the ⋮ menu and choose “Install app” or “Install page as app” if available.';
+      }
+      banner.classList.add('visible');
+    };
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      setTimeout(showBanner, 1800);
+    });
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      banner?.classList.remove('visible');
+    });
+    installButton?.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) {
+        alert('In Chrome, open the three-dot menu (⋮) and choose “Install app” or “Install page as app” when it is available.');
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      banner?.classList.remove('visible');
+    });
+    laterButton?.addEventListener('click', () => {
+      banner?.classList.remove('visible');
+      try { localStorage.setItem(dismissalKey, String(Date.now())); } catch {}
+    });
+    window.addEventListener('load', () => setTimeout(showBanner, 2600), { once: true });
+  })();
+
   function getInitials(username){const value=String(username||'V').trim();const parts=value.split(/[\s_-]+/).filter(Boolean);if(parts.length>=2)return `${parts[0][0]}${parts[1][0]}`.toUpperCase();return value.slice(0,1).toUpperCase();}
   function updateAuthUI(){
     const loggedIn = Boolean(currentUser);
     const username = currentUser?.user_metadata?.username || currentUser?.email?.split('@')[0] || 'User';
-    const initials = getInitials(username);
+    const displayName = currentUser?.user_metadata?.display_name || username;
+    const avatarColor = currentUser?.user_metadata?.profile_color || '#8b7cf6';
+    const initials = getInitials(displayName);
 
     [profileAvatar, headerProfileAvatar].forEach(el => {
       if (el) el.textContent = initials;
     });
 
-    profileName.textContent = loggedIn ? username : 'Guest';
+    profileName.textContent = loggedIn ? displayName : 'Guest';
     profileState.textContent = loggedIn ? 'Signed in' : 'Not signed in';
-    accountMenuName.textContent = loggedIn ? username : 'Guest';
+    [profileAvatar, headerProfileAvatar].forEach(el => { if (el) el.style.backgroundColor = loggedIn ? avatarColor : ''; });
+    accountMenuName.textContent = loggedIn ? displayName : 'Guest';
+    if (personalizeProfileBtn) personalizeProfileBtn.hidden = !loggedIn;
+    if (menuPasskeyBtn) menuPasskeyBtn.hidden = !loggedIn;
     accountMenuEmail.textContent = loggedIn ? 'Vexel account' : 'Not signed in';
 
     // Account-menu authentication actions:
@@ -1430,6 +1652,72 @@ body.modal-open { overflow:hidden; }
   }
   function toggleAccountMenu(forceOpen=null,fromHeader=false){const shouldOpen=forceOpen===null?accountMenu.hidden:forceOpen;accountMenu.hidden=!shouldOpen;accountMenu.classList.toggle('from-header',Boolean(fromHeader&&shouldOpen));profileButton.setAttribute('aria-expanded',String(shouldOpen));headerProfileButton?.setAttribute('aria-expanded',String(shouldOpen));}
   function closeAccountMenu(){accountMenu.hidden=true;accountMenu.classList.remove('from-header');profileButton.setAttribute('aria-expanded','false');headerProfileButton?.setAttribute('aria-expanded','false');}
+  function openProfileModal() {
+    if (!currentUser) return;
+    const metadata = currentUser.user_metadata || {};
+    document.getElementById('profileDisplayNameInput').value = metadata.display_name || metadata.username || '';
+    document.getElementById('profileAccentInput').value = metadata.profile_color || '#8b7cf6';
+    document.getElementById('profileModalError').textContent = '';
+    document.getElementById('profileModal').classList.add('active');
+    document.body.classList.add('modal-open');
+    setTimeout(() => document.getElementById('profileDisplayNameInput').focus(), 0);
+  }
+  function closeProfileModal() {
+    document.getElementById('profileModal').classList.remove('active');
+    document.body.classList.remove('modal-open');
+  }
+  async function saveProfile() {
+    const errorEl = document.getElementById('profileModalError');
+    const saveBtn = document.getElementById('saveProfileButton');
+    const displayName = document.getElementById('profileDisplayNameInput').value.trim();
+    const colour = document.getElementById('profileAccentInput').value;
+    if (!currentUser || !supabaseClient) { errorEl.textContent = 'Please sign in before editing your profile.'; return; }
+    if (!displayName || displayName.length > 32) { errorEl.textContent = 'Enter a display name from 1 to 32 characters.'; return; }
+    const allowedColours = ['#8b7cf6','#4f91ff','#24a98a','#d76a9e','#e49b45'];
+    if (!allowedColours.includes(colour)) { errorEl.textContent = 'Choose one of the available avatar colours.'; return; }
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; errorEl.textContent = '';
+    try {
+      const { data, error } = await supabaseClient.auth.updateUser({ data: { display_name: displayName, profile_color: colour } });
+      if (error) throw error;
+      currentUser = data.user || currentUser;
+      updateAuthUI();
+      closeProfileModal();
+    } catch (error) {
+      console.error('Profile update failed:', error);
+      errorEl.textContent = error?.message || 'Vexel could not save your profile. Please try again.';
+    } finally {
+      saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
+    }
+  }
+  async function createPasskey() {
+    closeAccountMenu();
+    if (!currentUser || !supabaseClient) { alert('Please sign in before creating a passkey.'); return; }
+    if (!window.isSecureContext || !navigator.credentials || typeof supabaseClient.auth.registerPasskey !== 'function') {
+      alert('Passkeys are not available in this browser session. Update Vexel and use the secure HTTPS website, then try again.');
+      return;
+    }
+    if (menuPasskeyBtn) { menuPasskeyBtn.disabled = true; menuPasskeyBtn.textContent = 'Creating passkey…'; }
+    try {
+      const { data, error } = await supabaseClient.auth.registerPasskey();
+      if (error) throw error;
+      alert('Passkey created successfully. You can now use your device or password manager to sign in.');
+      console.info('Vexel passkey registered:', data?.id || 'created');
+    } catch (error) {
+      console.error('Passkey registration failed:', error);
+      const code = String(error?.code || error?.name || '');
+      const message = code.includes('passkey_disabled')
+        ? 'Passkeys are not enabled for this Supabase project yet. The site owner must enable Authentication → Passkeys and configure the Vexel domain in Supabase.'
+        : (error?.message || 'Vexel could not create a passkey. Check the Supabase Passkeys setting and try again.');
+      alert(message);
+    } finally {
+      if (menuPasskeyBtn) { menuPasskeyBtn.disabled = false; menuPasskeyBtn.textContent = 'Create a passkey'; }
+    }
+  }
+  window.openProfileModal = openProfileModal;
+  window.closeProfileModal = closeProfileModal;
+  window.saveProfile = saveProfile;
+  window.createPasskey = createPasskey;
+
   async function logout(){
   if(!supabaseClient)return;
 

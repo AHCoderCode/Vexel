@@ -18,7 +18,8 @@
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
-          storageKey: 'vexel-supabase-auth'
+          storageKey: 'vexel-supabase-auth',
+          experimental: { passkey: true }
         }
       }
     );

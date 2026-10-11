@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "vexel-app-v1";
+const CACHE_NAME = "vexel-app-v3";
 
 const APP_SHELL = [
   "/",
@@ -11,7 +11,10 @@ const APP_SHELL = [
   "/vexel-ui-fixes.js",
   "/manifest.json",
   "/icons/icon-192.png",
-  "/icons/icon-512.png"
+  "/icons/icon-512.png",
+  "/icons/vexel-icon.svg",
+  "/terms.html",
+  "/privacy.html"
 ];
 
 /*
