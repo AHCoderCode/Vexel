@@ -1544,6 +1544,13 @@ body.modal-open { overflow:hidden; }
   function saveCurrentChatIfNeeded(){return saveCurrentChat(activeChatId);}
   function regenerateResponse() {
     if (isWaiting) return;
+    // Preserve the exact state of the most recent attempted turn. In particular,
+    // do not infer "committed" from an older assistant reply after a failed request.
+    if (Array.isArray(lastUserParts) && lastUserPrompt !== null) {
+      sendMessage(true);
+      return;
+    }
+    // If the user switched conversations, derive the newest committed turn there.
     let latestUser = null;
     for (let n = chatHistory.length - 1; n >= 0; n--) {
       if (chatHistory[n]?.role === 'user') { latestUser = chatHistory[n]; break; }
@@ -1551,7 +1558,6 @@ body.modal-open { overflow:hidden; }
     if (!latestUser) return;
     lastUserPrompt = latestUser.parts?.find((part) => typeof part.text === 'string')?.text || '';
     lastUserParts = Array.isArray(latestUser.parts) ? latestUser.parts : [];
-    // Recalculate for the active conversation; switching chats must not leave stale state.
     lastTurnCommitted = chatHistory.at(-1)?.role === 'model';
     sendMessage(true);
   }
