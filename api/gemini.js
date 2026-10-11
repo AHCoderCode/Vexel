@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   }
 
   const primaryModel = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-  const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash";
+  const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.8-flash";
   const models = [...new Set([primaryModel, fallbackModel])];
 
   // Send only earlier turns as history. This endpoint adds the current user turn once below.
@@ -76,7 +76,8 @@ export default async function handler(req, res) {
 
   for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
     const model = models[modelIndex];
-    const tries = 2;
+    // Retry the configured primary model once; use one bounded fallback attempt to avoid long serverless hangs.
+    const tries = modelIndex === 0 ? 2 : 1;
 
     for (let attempt = 0; attempt < tries; attempt++) {
       let response;
@@ -84,7 +85,7 @@ export default async function handler(req, res) {
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 40000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
           response = await fetch(
@@ -136,7 +137,7 @@ export default async function handler(req, res) {
         // Retry transient rate limits or provider overload, then try the fallback model.
         if (isTransient) {
           if (attempt < tries - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)));
+            await new Promise((resolve) => setTimeout(resolve, 1000 * (2 ** attempt)));
             continue;
           }
           break;
@@ -167,7 +168,7 @@ export default async function handler(req, res) {
         lastFailure = { model, status: lastStatus, detailText: String(error?.message || "") };
 
         if (attempt < tries - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)));
+          await new Promise((resolve) => setTimeout(resolve, 1000 * (2 ** attempt)));
           continue;
         }
         break;
