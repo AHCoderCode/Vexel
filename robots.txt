@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /login.html
+Disallow: /signup.html
+
+Sitemap: https://vexelai-zeta.vercel.app/sitemap.xml
