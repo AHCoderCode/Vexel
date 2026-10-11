@@ -98,8 +98,7 @@ export default async function handler(req, res) {
               },
               signal: controller.signal,
               body: JSON.stringify({
-                contents,
-                generationConfig: { temperature: 0.7 }
+                contents
               })
             }
           );
