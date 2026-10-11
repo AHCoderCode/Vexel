@@ -1017,7 +1017,7 @@ body.modal-open { overflow:hidden; }
     if (previousId && previousId !== chatId) unlockedChats.delete(previousId);
     activeChatId = chatId;
     if (currentUser) localStorage.setItem(activeChatStorageKey(), chatId);
-    lastUserPrompt = null; lastUserParts = null;
+    lastUserPrompt = null; lastUserParts = null; lastTurnCommitted = false;
     loadActiveChat();
     renderChatList();
     if (window.innerWidth <= 768) toggleSidebar(false);
@@ -1541,7 +1541,19 @@ body.modal-open { overflow:hidden; }
   }
   async function saveCurrentChat(chatId=activeChatId){if(!chatId||isIncognito||!currentUser)return;const chat=getChatById(chatId);if(!chat)return;chat.messages=chatId===activeChatId?chatHistory:chat.messages;chat.updatedAt=Date.now();if(chat.title==='New Chat'&&chat.messages.length){const first=chat.messages.find(m=>m.role==='user');const text=first?.parts?.find(p=>p.text)?.text;chat.title=text?text.replace(/\s+/g,' ').trim().slice(0,70):'File chat';}try{await queueCloudSave(chatId);renderChatList();}catch(error){console.error('Save chat error:',error);throw error;}}
   function saveCurrentChatIfNeeded(){return saveCurrentChat(activeChatId);}
-  function regenerateResponse(){if(isWaiting)return;if(!lastUserPrompt&&!(chatHistory.find(m=>m.role==='user'))){return;}sendMessage(true);}
+  function regenerateResponse() {
+    if (isWaiting) return;
+    let latestUser = null;
+    for (let n = chatHistory.length - 1; n >= 0; n--) {
+      if (chatHistory[n]?.role === 'user') { latestUser = chatHistory[n]; break; }
+    }
+    if (!latestUser) return;
+    lastUserPrompt = latestUser.parts?.find((part) => typeof part.text === 'string')?.text || '';
+    lastUserParts = Array.isArray(latestUser.parts) ? latestUser.parts : [];
+    // Recalculate for the active conversation; switching chats must not leave stale state.
+    lastTurnCommitted = chatHistory.at(-1)?.role === 'model';
+    sendMessage(true);
+  }
   async function clearCurrentChat(){if(isWaiting||!activeChatId)return;if(!confirm('Clear this conversation?'))return;chatHistory=[];const chat=getChatById(activeChatId);if(chat){chat.messages=[];chat.updatedAt=Date.now();try{await queueCloudSave(activeChatId);}catch(error){console.error('Clear chat error:',error);alert('The chat could not be cleared.');return;}}clearDraftUI();renderAllMessages();renderChatList();}
   function toggleFeedback(type,button){const key=feedbackStorageKey();if(!key||!activeChatId||isIncognito)return;let feedback={};try{feedback=JSON.parse(localStorage.getItem(key)||'{}');}catch{feedback={};}const assistantNodes=[...messagesDiv.querySelectorAll('.message.assistant')];const index=assistantNodes.indexOf(button.closest('.message.assistant'));const feedbackKey=`${activeChatId}:${index}`;feedback[feedbackKey]=feedback[feedbackKey]===type?null:type;localStorage.setItem(key,JSON.stringify(feedback));button.classList.toggle(type==='like'?'liked':'disliked',feedback[feedbackKey]===type);const sibling=type==='like'?button.nextElementSibling:button.previousElementSibling;sibling?.classList.remove(type==='like'?'disliked':'liked');}
   function toggleTheme(){document.body.classList.toggle('light-mode');const theme=document.body.classList.contains('light-mode')?'light':'dark';localStorage.setItem('vexel_theme',theme);updateThemeIcon();}
