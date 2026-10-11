@@ -23,7 +23,7 @@
     crossorigin="anonymous"
   ></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0"></script>
   <script src="supabaseClient.js"></script>
 
   <style>
@@ -56,6 +56,9 @@ form{display:grid;gap:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 .eye{position:absolute;right:5px;top:5px;width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}.eye:hover{background:rgba(255,255,255,.06);color:var(--text)}.eye:active{transform:scale(.96)}
 .hint{color:#777780;font-size:10px;margin-top:5px;line-height:1.4}
 .submit{width:100%;height:44px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:650;cursor:pointer;transition:background .14s ease,opacity .14s ease,transform .05s ease}.submit:hover:not(:disabled){background:var(--accent-hover)}.submit:active:not(:disabled){transform:translateY(1px)}.submit:disabled{opacity:.55;cursor:not-allowed}
+.passkey-btn{width:100%;height:43px;margin-top:12px;border:1px solid var(--border-strong);border-radius:10px;background:transparent;color:var(--text);font-weight:650;font-size:13px;cursor:pointer;transition:background .14s ease}
+.passkey-btn:hover:not(:disabled){background:var(--surface2)}.passkey-btn:disabled{opacity:.55;cursor:wait}
+.legal-links{text-align:center;color:var(--muted);font-size:11px;margin-top:14px}.legal-links a{color:#b8afff;text-decoration:underline;text-underline-offset:2px}
 .switch{text-align:center;color:var(--muted);font-size:12px;margin:18px 0 0}.switch a{color:#b8afff;text-decoration:none}.switch a:hover{text-decoration:underline}
 .home-link{display:block;text-align:center;margin-top:11px;color:var(--muted);font-size:11px;text-decoration:none}.home-link:hover{color:var(--text)}
 .note{text-align:center;color:#777780;font-size:10px;margin-top:13px;line-height:1.5}
@@ -153,6 +156,8 @@ form{display:grid;gap:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 
       </form>
 
+      <button class="passkey-btn" type="button" id="passkeyLoginButton">Continue with a passkey</button>
+
       <p class="switch">
         Don't have an account?
         <a href="signup.html">
@@ -167,6 +172,7 @@ form{display:grid;gap:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
         Back to Vexel
       </a>
 
+      <p class="legal-links"><a href="/terms.html">Terms of Service</a> · <a href="/privacy.html">Privacy Policy</a></p>
       <p class="note">Your username is used as Vexel’s internal sign-in identity.</p>
 
     </section>
@@ -199,10 +205,41 @@ form{display:grid;gap:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 
       const button =
         document.getElementById("submitButton");
+      const passkeyButton = document.getElementById("passkeyLoginButton");
 
       function showError(message) {
         errorEl.textContent = message || "";
       }
+
+      passkeyButton?.addEventListener("click", async () => {
+        showError("");
+        statusEl.textContent = "";
+        if (!client || typeof client.auth.signInWithPasskey !== "function") {
+          showError("Passkeys are not available yet. Update Vexel and make sure passkey authentication is enabled in the Supabase project.");
+          return;
+        }
+        if (!window.isSecureContext || !navigator.credentials) {
+          showError("Passkeys require a secure HTTPS browser session that supports WebAuthn.");
+          return;
+        }
+        passkeyButton.disabled = true;
+        passkeyButton.textContent = "Waiting for your passkey…";
+        try {
+          const { data, error } = await client.auth.signInWithPasskey();
+          if (error) throw error;
+          if (!data?.session) throw new Error("No session was returned. Please try your usual username and password.");
+          window.location.assign("/");
+        } catch (error) {
+          console.error("Vexel passkey login failed:", error);
+          const code = String(error?.code || error?.name || "");
+          showError(code.includes("passkey_disabled")
+            ? "Passkey sign-in is not enabled for this Vexel project yet. The site owner must enable it in Supabase Authentication settings."
+            : (error?.message || "Passkey sign-in was cancelled or failed. You can still use your username and password."));
+        } finally {
+          passkeyButton.disabled = false;
+          passkeyButton.textContent = "Continue with a passkey";
+        }
+      });
 
       passwordEye.addEventListener(
         "click",
