@@ -611,7 +611,7 @@
   async function startTextExtraction(sourceText) {
     const text = String(sourceText || "").trim();
     if (text.length < 8) {
-      showError("Add your question text", "Paste the full question wording and all answer choices before continuing.", renderTextQuestionInput);
+      showError("Add your question text", "Paste the full question wording and all answer choices before continuing.", () => renderTextQuestionInput());
       return;
     }
     const requestId = ++requestSequence;
