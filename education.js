@@ -718,7 +718,10 @@
 
   let activeRecognition = null;
   let activeRecognitionCleanup = null;
+  let recognitionTimeout = null;
   function stopRecognition() {
+    if (recognitionTimeout !== null) window.clearTimeout(recognitionTimeout);
+    recognitionTimeout = null;
     if (activeRecognition) {
       try { activeRecognition.onresult = null; activeRecognition.onerror = null; activeRecognition.onend = null; activeRecognition.stop(); } catch {}
     }
@@ -742,10 +745,9 @@
       const target = question.choices.find((choice) => choice.id.toUpperCase() === letters[1].toUpperCase());
       if (target) return { choiceId: target.id };
     }
-    const ordinal = raw.match(/\b(first|1st|one|second|2nd|two|third|3rd|three|fourth|4th|four|fifth|5th|five|sixth|6th|six|seventh|7th|seven|eighth|8th|eight)\s+(?:option|choice|answer)\b/i) ||
-      raw.match(/\b(the\s+)?(first|1st|one|second|2nd|two|third|3rd|three|fourth|4th|four|fifth|5th|five|sixth|6th|six|seventh|7th|seven|eighth|8th|eight)\b/i);
+    const ordinal = raw.match(/\b(first|1st|one|second|2nd|two|third|3rd|three|fourth|4th|four|fifth|5th|five|sixth|6th|six|seventh|7th|seven|eighth|8th|eight)\s+(?:option|choice|answer)\b/i);
     if (ordinal) {
-      const word = ordinal[2] !== undefined ? ordinal[2].toLowerCase() : ordinal[1].toLowerCase();
+      const word = ordinal[1].toLowerCase();
       const ordinals = { first: 0, "1st": 0, one: 0, second: 1, "2nd": 1, two: 1, third: 2, "3rd": 2, three: 2, fourth: 3, "4th": 3, four: 3, fifth: 4, "5th": 4, five: 4, sixth: 5, "6th": 5, six: 5, seventh: 6, "7th": 6, seven: 6, eighth: 7, "8th": 7, eight: 7 };
       const optionIndex = ordinals[word];
       if (optionIndex < question.choices.length) return { choiceId: question.choices[optionIndex].id };
@@ -814,7 +816,7 @@
     micButton.textContent = "Stop listening";
     micButton.classList.add("listening");
     feedback.className = "ed-feedback";
-    feedback.textContent = "Listening. Speak your option or answer, then check the transcript.";
+    feedback.textContent = "Starting voice recognition. Allow microphone access if your browser asks, then speak your answer.";
     activeRecognitionCleanup = () => {
       micButton.textContent = "Use voice";
       micButton.classList.remove("listening");
@@ -830,6 +832,8 @@
       input.dispatchEvent(new Event("input", { bubbles: true }));
     };
     recognition.onerror = (event) => {
+      if (recognitionTimeout !== null) window.clearTimeout(recognitionTimeout);
+      recognitionTimeout = null;
       const messages = {
         "not-allowed": "Microphone permission was denied. Enable microphone access or type your answer.",
         "service-not-allowed": "The browser blocked speech recognition. Type your answer or select an option.",
@@ -841,6 +845,8 @@
       feedback.textContent = messages[event.error] || "Voice recognition failed. Nothing was marked wrong; you can try again or type your answer.";
     };
     recognition.onend = () => {
+      if (recognitionTimeout !== null) window.clearTimeout(recognitionTimeout);
+      recognitionTimeout = null;
       if (activeRecognition === recognition) activeRecognition = null;
       if (activeRecognitionCleanup) activeRecognitionCleanup();
       activeRecognitionCleanup = null;
@@ -851,6 +857,14 @@
     };
     try {
       recognition.start();
+      recognitionTimeout = window.setTimeout(() => {
+        if (activeRecognition !== recognition) return;
+        try { recognition.stop(); } catch {}
+        if (!input.value.trim()) {
+          feedback.className = "ed-feedback ed-note-error";
+          feedback.textContent = "Voice recognition timed out. Nothing was marked wrong; try speaking again or type your answer.";
+        }
+      }, 15000);
     } catch (error) {
       stopRecognition();
       feedback.className = "ed-feedback ed-note-error";
