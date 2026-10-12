@@ -194,7 +194,7 @@
   window.addEventListener("focus", updateQuizTimer);
 
   function countQuestions(text) {
-    const match = String(text || "").match(/\b(\d{1,2})\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/i) ||
+    const match = String(text || "").match(/\b(\d{1,3})\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/i) ||
       String(text || "").match(/\b(?:create|make|generate)\s+(\d{1,2})\b/i);
     if (!match) return 10;
     return Math.min(MAX_QUESTIONS, Math.max(1, Number(match[1]) || 10));
@@ -209,7 +209,7 @@
 
   function topicFromText(text) {
     return String(text || "")
-      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|a|an|the|this|these|on|about|for|please|me|with|and|of|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|chapter|notes?|document|file|pdf|content|study|material|worksheet|uploaded|attached|in|from|o level|a level|gcse|igcse|ib|ap|level|15-question)\b/gi, " ")
+      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|topic|subject|a|an|the|this|these|on|about|for|please|me|with|and|of|i|want|you|can|could|would|should|like|in|from|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|chapter|notes?|document|file|pdf|content|study|material|worksheet|uploaded|attached|o level|a level|gcse|igcse|ib|ap|level|15-question)\b/gi, " ")
       .replace(/\b\d+\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/gi, " ")
       .replace(/\b\d+\b/g, " ")
       .replace(/\s+/g, " ")
