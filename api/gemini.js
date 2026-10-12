@@ -33,7 +33,8 @@ export default async function handler(req, res) {
 
   const primaryModel = process.env.GEMINI_MODEL || "gemini-3.6-flash";
   const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.8-flash";
-  const models = [...new Set([primaryModel, fallbackModel])];
+  const lowCostModel = process.env.GEMINI_LOW_COST_MODEL || "gemini-3.5-flash-lite";
+  const models = [...new Set([primaryModel, fallbackModel, lowCostModel].filter(Boolean))];
 
   // Send only earlier turns as history. This endpoint adds the current user turn once below.
   const contents = history.slice(-32).flatMap((turn) => {
@@ -122,12 +123,21 @@ export default async function handler(req, res) {
         lastStatus = response.status;
         lastFailure = { model, status: response.status, detailText, details };
 
-        // A real account/billing quota cannot be repaired by hammering the same endpoint.
+        // A model-specific free-tier/throughput limit may still permit another model.
+        const isModelSpecificQuota =
+          /model\s*[:=]|per[_ ]model|model[- ]specific|model.{0,80}(?:quota|limit)|(?:quota|limit).{0,80}model|limit:\s*0|generate_content_free_tier_requests/.test(detailText);
+        if (isQuotaExhausted && isModelSpecificQuota && modelIndex < models.length - 1) {
+          lastStatus = response.status;
+          lastFailure = { model, status: response.status, detailText: "Model-specific quota reached; trying the next configured model." };
+          break;
+        }
+
+        // A project/account-wide billing limit cannot be bypassed by switching models.
         if (isQuotaExhausted) {
           return res.status(429).json({
             error: {
               code: "AI_QUOTA_EXHAUSTED",
-              message: "Vexel has reached the AI provider's current usage quota. This is not a problem with your message. Please try later; the site owner may need to review the Gemini API quota or billing limits.",
+              message: "Vexel could not get a response because the Gemini API quota or billing limit has been reached for the available models. This is not a problem with your message. Check the Gemini API quota and billing settings for the key used in Vercel.",
               retryable: false
             }
           });
