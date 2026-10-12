@@ -351,17 +351,17 @@
 
   async function startImageExtraction(images, request) {
     const requestId = ++requestSequence;
-    const total = (images || []).reduce((sum, image) => sum + (image.data || "").length * 0.75, 0);
     if (!images || !images.length) {
       showError("No question image found", "Choose a JPEG, PNG, or WebP photo to start the beta image question solver.", startImageInput);
       return;
     }
-    if (images.length > MAX_IMAGE_FILES || total > MAX_IMAGE_TOTAL) {
-      showError("Images are too large", "Upload up to four images with a combined size of 2.4 MB or less.", startImageInput);
-      return;
-    }
     state.images = images.map((image) => ({ mimeType: image.mimeType, data: image.data, previewUrl: image.previewUrl }));
     state.originalRequest = request || "Extract these worksheet questions.";
+    const total = state.images.reduce((sum, image) => sum + (image.data || "").length * 0.75, 0);
+    if (images.length > MAX_IMAGE_FILES || total > MAX_IMAGE_TOTAL) {
+      showError("Images are too large", "Upload up to four images with a combined size of 2.4 MB or less. Choose smaller files to continue.", startImageInput);
+      return;
+    }
     state.isImage = true;
     state.retryAction = () => startImageExtraction(state.images, state.originalRequest);
     showLoading("Reading your worksheet", "Vexel is extracting visible questions and answer choices. Unclear text will be flagged for review.");
