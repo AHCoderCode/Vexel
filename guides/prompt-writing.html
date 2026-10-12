@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How to Write Better AI Prompts | Vexel AI Guides</title>
+  <meta name="description" content="A practical five-part method for writing AI prompts, with before-and-after examples, troubleshooting tips, and a reusable template.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://vexelai-zeta.vercel.app/guides/prompt-writing.html">
+  <meta name="google-adsense-account" content="ca-pub-5962202637347912">
+  <meta name="theme-color" content="#212121">
+  <link rel="icon" href="/icons/vexel-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/content.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="/"><span class="brand-mark">V</span><span>Vexel AI</span></a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="/guides.html">AI Guides</a>
+    <a href="/about.html">About</a>
+    <a href="/contact.html">Contact</a>
+    <a href="/login.html">Log in</a>
+    <a class="nav-cta" href="/signup.html">Try Vexel</a>
+  </nav>
+</header>
+
+<main class="content-wrap">
+  <div class="breadcrumb"><a href="/">Home</a> / <a href="/guides.html">AI Guides</a> / Writing better prompts</div>
+  <article class="article">
+    <header class="hero">
+      <span class="eyebrow">PROMPTING BASICS</span>
+      <h1>How to write better AI prompts</h1>
+      <p class="lead">A useful prompt reduces guesswork. You do not need secret keywords or complicated jargon; you need to explain the outcome you want, the context that matters, and how you will judge the result.</p>
+      <p class="small-meta">A practical guide · About 6 minutes</p>
+    </header>
+    <p>People often ask an AI assistant something broad, receive a broad answer, and assume the model is incapable. Sometimes that is true, but often the request left too many important choices unspecified. A prompt cannot guarantee accuracy, yet it can make the task easier to understand and the result easier to evaluate.</p>
+    <h2 id="framework">Use a five-part framework</h2>
+    <p>Before sending a request, think through these five elements. You can leave out any element that genuinely does not matter, but consider each one deliberately.</p>
+    <ol>
+      <li><strong>Goal:</strong> What finished result do you need? Say “help me find the bug in this function” instead of “JavaScript.”</li>
+      <li><strong>Context:</strong> What should the assistant know first? Give the intended audience, current skill level, relevant background, or a small sample of the input.</li>
+      <li><strong>Constraints:</strong> What must it avoid or preserve? Examples include “use plain JavaScript,” “do not change the HTML,” or “keep the explanation beginner-friendly.”</li>
+      <li><strong>Format:</strong> What shape should the answer take? Request numbered steps, a table, a worked example, or a patch with the exact filename.</li>
+      <li><strong>Quality check:</strong> How should the answer be checked? Ask the assistant to list assumptions, flag uncertainty, or provide a test case.</li>
+    </ol>
+    <div class="example">
+      <h3>Reusable prompt template</h3>
+      <pre>Goal: [the result I want]
+Context: [what the assistant needs to know]
+Constraints: [what to include, avoid, or keep unchanged]
+Format: [how I want the answer organised]
+Check: [how to test or verify the result]</pre>
+      <p>Do not fill every line with unnecessary detail. The aim is to share relevant information, not to make every request long.</p>
+    </div>
+    <h2 id="examples">Before and after: three examples</h2>
+    <h3>Example 1: learning a concept</h3>
+    <p><strong>Broad request:</strong> “Teach me loops.”</p>
+    <p><strong>Clearer request:</strong> “Explain Python <code>for</code> loops to a beginner who understands variables and lists. Start with a simple everyday analogy, show two short examples, then give me three questions one at a time. Do not reveal the answer until I try.”</p>
+    <p>The second prompt gives the assistant a level, a scope, and a teaching method. It also turns reading into practice.</p>
+    <h3>Example 2: improving writing</h3>
+    <p><strong>Broad request:</strong> “Make this better.”</p>
+    <p><strong>Clearer request:</strong> “Rewrite the paragraph below for a school newsletter. Keep the meaning and all factual details, use a warm but straightforward tone, and keep it under 120 words. After the rewrite, list any facts that were ambiguous rather than inventing details.”</p>
+    <p>Notice the guardrail: preserving facts is just as important as improving style.</p>
+    <h3>Example 3: fixing code</h3>
+    <p><strong>Broad request:</strong> “My website is broken.”</p>
+    <p><strong>Clearer request:</strong> “In <code>script.js</code>, clicking Submit should validate the form but nothing happens. I am using plain JavaScript in a browser. Here is the relevant HTML, event listener, and exact console error. Identify the most likely cause first, explain it in beginner language, and give the smallest safe change. Do not rewrite unrelated files.”</p>
+    <p>Relevant code and an exact error are much more informative than a description of the whole project. Remove passwords, API keys, private chat logs, and personal information before sharing code or screenshots.</p>
+    <h2 id="iterate">Improve a prompt in small iterations</h2>
+    <p>If the first response misses the mark, identify what is wrong with it. “This is too advanced” or “you changed the requirement” is useful feedback; repeating the original prompt verbatim often is not.</p>
+    <ol>
+      <li>Compare the response with the original goal.</li>
+      <li>Name one concrete gap, such as an incorrect assumption, missing step, or unsuitable format.</li>
+      <li>Ask for a revision that addresses that gap while preserving the parts that were correct.</li>
+      <li>Check the revised result rather than accepting it simply because it is the second attempt.</li>
+    </ol>
+    <h2 id="common-mistakes">Common prompt mistakes</h2>
+    <ul>
+      <li><strong>Too many unrelated tasks.</strong> Split a large project into a clear sequence with a definition of “done” for each stage.</li>
+      <li><strong>Conflicting instructions.</strong> Saying “explain every detail” and “answer in one sentence” makes priorities unclear. State which requirement matters most.</li>
+      <li><strong>Missing environment information.</strong> Programming answers can differ by language version, browser, framework, or operating system.</li>
+      <li><strong>Demanding certainty.</strong> “Never be wrong” cannot ensure correctness. A request to show assumptions and verification steps is more practical.</li>
+      <li><strong>Sharing sensitive data.</strong> A better prompt should not require private credentials or unnecessary personal details.</li>
+    </ul>
+    <h2 id="checklist">A 30-second pre-send check</h2>
+    <div class="checklist"><ul>
+      <li>Can a reader tell what successful completion means?</li>
+      <li>Have I included the context that could change the answer?</li>
+      <li>Have I stated important limits or things that must remain unchanged?</li>
+      <li>Will the chosen output format help me use the response?</li>
+      <li>Do I know how to test or verify the result?</li>
+    </ul></div>
+    <p>A good prompt is a clear task description, not a magic spell. Start with the real goal, provide relevant context, and review the result. Over time, this habit improves collaboration with AI tools and with people, too.</p>
+    <div class="related"><strong>Continue learning:</strong> <a href="/guides/checking-ai-answers.html">Check an AI answer</a> · <a href="/guides/learning-with-ai.html">Use AI as a tutor</a> · <a href="/guides.html">All guides</a></div>
+  </article>
+</main>
+<footer class="site-footer">
+  <span>© 2026 Vexel AI · Independent AI learning resource</span>
+  <nav aria-label="Footer navigation">
+    <a href="/guides.html">AI Guides</a><a href="/about.html">About</a><a href="/contact.html">Contact</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a>
+  </nav>
+</footer>
+</body>
+</html>
