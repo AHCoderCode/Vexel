@@ -21,6 +21,17 @@
   picker.setAttribute("aria-label", "Choose worksheet images");
   document.body.appendChild(picker);
 
+  const pagePicker = document.createElement("input");
+  pagePicker.type = "file";
+  pagePicker.accept = "image/jpeg,image/png,image/webp";
+  pagePicker.multiple = false;
+  pagePicker.hidden = true;
+  pagePicker.id = "educationPagePicker";
+  pagePicker.setAttribute("aria-label", "Add or replace a worksheet image");
+  document.body.appendChild(pagePicker);
+  let pagePickerAction = "";
+  let pagePickerIndex = -1;
+
   let requestSequence = 0;
   let timerHandle = null;
   let timerDeadline = null;
@@ -77,6 +88,9 @@
     }
     root.replaceChildren();
     picker.value = "";
+    pagePicker.value = "";
+    pagePickerAction = "";
+    pagePickerIndex = -1;
     state.mode = "";
     state.quiz = null;
     state.quizToken = "";
@@ -415,6 +429,51 @@
     }
   }
 
+  function choosePageAction(action, index = -1) {
+    const proceed = !state.extractedQuestions.length ||
+      window.confirm("Changing worksheet images will re-read the pages and reset any text edits made on this review screen. Continue?");
+    if (!proceed) return;
+    pagePickerAction = action;
+    pagePickerIndex = index;
+    pagePicker.multiple = action === "add";
+    pagePicker.value = "";
+    pagePicker.click();
+  }
+
+  async function handlePagePickerChange() {
+    const files = Array.from(pagePicker.files || []);
+    const action = pagePickerAction;
+    const index = pagePickerIndex;
+    pagePickerAction = "";
+    pagePickerIndex = -1;
+    if (!files.length || !action) return;
+    try {
+      if (action === "replace" && files.length !== 1) {
+        throw new Error("Choose exactly one image to replace this page.");
+      }
+      if (action === "add" && state.images.length + files.length > MAX_IMAGE_FILES) {
+        throw new Error("A maximum of four worksheet images is supported.");
+      }
+      const loaded = await Promise.all(files.map(readImageFile));
+      let combined = state.images.slice();
+      if (action === "replace") combined[index] = loaded[0];
+      else if (action === "remove") combined.splice(index, 1);
+      else combined = combined.concat(loaded);
+      const total = combined.reduce((sum, image) => sum + (image.size || (image.data.length * 0.75)), 0);
+      if (combined.length < 1 || combined.length > MAX_IMAGE_FILES) {
+        throw new Error("Keep between one and four worksheet images.");
+      }
+      if (total > MAX_IMAGE_TOTAL) {
+        throw new Error("The combined image size must be 2.4 MB or less. Upload smaller images or fewer pages.");
+      }
+      await startImageExtraction(combined, state.originalRequest || "Extract these worksheet questions so I can answer them directly.");
+    } catch (error) {
+      showError("Worksheet image update failed", error.message, renderImageReview);
+    } finally {
+      pagePicker.value = "";
+    }
+  }
+
   async function startImageExtraction(images, request) {
     const requestId = ++requestSequence;
     if (!images || !images.length) {
@@ -475,9 +534,28 @@
       img.alt = "Uploaded worksheet image " + (index + 1);
       figure.append(img);
       figure.append(el("figcaption", "", "Page " + (index + 1)));
+      const pageActions = el("div", "ed-source-actions");
+      pageActions.append(makeButton("Replace", "ed-text-button", () => choosePageAction("replace", index)));
+      pageActions.append(makeButton("Remove", "ed-text-button", () => {
+        if (state.images.length <= 1) {
+          alertNote(body, "Keep at least one worksheet image. Use Replace to change this page, or close the solver to cancel.", true);
+          return;
+        }
+        const proceed = window.confirm("Remove page " + (index + 1) + " and re-read the remaining pages? Text edits on this review screen will reset.");
+        if (!proceed) return;
+        const remaining = state.images.filter((_, pageIndex) => pageIndex !== index);
+        startImageExtraction(remaining, state.originalRequest);
+      }));
+      figure.append(pageActions);
       imageRow.append(figure);
     });
     body.append(imageRow);
+    const imageActions = el("div", "ed-inline-actions");
+    if (state.images.length < MAX_IMAGE_FILES) {
+      imageActions.append(makeButton("Add another page", "ed-button ed-button-secondary", () => choosePageAction("add")));
+    }
+    imageActions.append(makeButton("Replace all images", "ed-button ed-button-secondary", () => startImageInput()));
+    body.append(imageActions);
 
     state.extractedQuestions.forEach((question, index) => {
       const card = el("section", "ed-panel ed-review-card");
@@ -1123,6 +1201,7 @@
   }
 
   picker.addEventListener("change", handlePickerChange);
+  pagePicker.addEventListener("change", handlePagePickerChange);
   const plusMenu = document.getElementById("plusMenu");
   if (plusMenu) {
     const item = el("button", "plus-menu-item");
