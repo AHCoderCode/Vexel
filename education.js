@@ -3,7 +3,7 @@
 
   const MAX_IMAGE_FILES = 4;
   const MAX_IMAGE_BYTES = 2.4 * 1024 * 1024;
-  const MAX_IMAGE_TOTAL = 3.0 * 1024 * 1024;
+  const MAX_IMAGE_TOTAL = 2.4 * 1024 * 1024;
   const MAX_QUESTIONS = 30;
   const root = document.createElement("div");
   root.id = "educationRoot";
@@ -19,6 +19,8 @@
   picker.id = "educationImagePicker";
   picker.setAttribute("aria-label", "Choose worksheet images");
   document.body.appendChild(picker);
+
+  let requestSequence = 0;
 
   const state = {
     mode: "",
@@ -56,6 +58,7 @@
   }
 
   function closeEducation() {
+    requestSequence++;
     stopRecognition();
     root.hidden = true;
     document.body.classList.remove("education-open");
@@ -145,7 +148,7 @@
 
   function topicFromText(text) {
     return String(text || "")
-      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|a|an|the|on|about|for|please|me|with|of|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|15-question)\b/gi, " ")
+      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|a|an|the|on|about|for|please|me|with|of|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|15-question)\b/gi, " ")
       .replace(/\b\d+\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/gi, " ")
       .replace(/\b\d+\b/g, " ")
       .replace(/\s+/g, " ")
@@ -200,7 +203,9 @@
     panel.append(topicInput);
     panel.append(el("label", "ed-label", "Number of questions"));
     const countSelect = el("select", "ed-field");
-    [5, 10, 15, 20, 25, 30].forEach((n) => {
+    const countOptions = [5, 10, 15, 20, 25, 30];
+    if (!countOptions.includes(count)) countOptions.push(count);
+    countOptions.sort((a, b) => a - b).forEach((n) => {
       const option = el("option", "", n + " questions");
       option.value = String(n);
       option.selected = n === count;
@@ -248,6 +253,7 @@
   }
 
   async function startGeneratedTest(spec) {
+    const requestId = ++requestSequence;
     state.spec = spec;
     state.originalRequest = spec.request || "";
     state.isImage = false;
@@ -255,6 +261,7 @@
     showLoading("Generating your test", "Creating " + spec.count + " " + spec.difficulty.toLowerCase() + " questions. Correct answers stay hidden until submission.");
     try {
       const data = await api("generate-quiz", spec);
+      if (requestId !== requestSequence) return;
       validateClientQuiz(data.quiz, data.quizToken, spec.count);
       state.quiz = data.quiz;
       state.quizToken = data.quizToken;
@@ -264,6 +271,7 @@
       state.mode = "active";
       renderQuestion();
     } catch (error) {
+      if (requestId !== requestSequence) return;
       showError("Couldn't generate the test", error.message, () => startGeneratedTest(spec));
     }
   }
@@ -328,7 +336,7 @@
     try {
       const images = await Promise.all(files.map(readImageFile));
       const total = images.reduce((sum, image) => sum + image.size, 0);
-      if (total > MAX_IMAGE_TOTAL) throw new Error("The combined image size must be 3 MB or less. Upload fewer pages or resize the images first.");
+      if (total > MAX_IMAGE_TOTAL) throw new Error("The combined image size must be 2.4 MB or less. Upload fewer pages or resize the images first.");
       startImageExtraction(images, "Extract these worksheet questions so I can answer them directly.");
     } catch (error) {
       showError("Image upload failed", error.message, startImageInput);
@@ -338,13 +346,14 @@
   }
 
   async function startImageExtraction(images, request) {
+    const requestId = ++requestSequence;
     const total = (images || []).reduce((sum, image) => sum + (image.data || "").length * 0.75, 0);
     if (!images || !images.length) {
       showError("No question image found", "Choose a JPEG, PNG, or WebP photo to start the beta image question solver.", startImageInput);
       return;
     }
     if (images.length > MAX_IMAGE_FILES || total > MAX_IMAGE_TOTAL) {
-      showError("Images are too large", "Upload up to four images with a combined size of 3 MB or less.", startImageInput);
+      showError("Images are too large", "Upload up to four images with a combined size of 2.4 MB or less.", startImageInput);
       return;
     }
     state.images = images.map((image) => ({ mimeType: image.mimeType, data: image.data, previewUrl: image.previewUrl }));
@@ -357,6 +366,7 @@
         request: state.originalRequest,
         images: state.images.map((image) => ({ mimeType: image.mimeType, data: image.data }))
       });
+      if (requestId !== requestSequence) return;
       if (!Array.isArray(data.questions) || !data.questions.length) {
         throw new Error("No questions could be read reliably. Upload a clearer photo showing the full question and its options.");
       }
@@ -375,6 +385,7 @@
       state.mode = "review";
       renderImageReview();
     } catch (error) {
+      if (requestId !== requestSequence) return;
       showError("Couldn't read this worksheet", error.message, () => startImageExtraction(state.images, state.originalRequest));
     }
   }
@@ -382,7 +393,7 @@
   function renderImageReview() {
     state.mode = "review";
     const body = screen("Review extracted questions", "Beta feature: check the transcription against your image before Vexel prepares the marking key. Uncertain text must be corrected before continuing.");
-    const note = el("div", "ed-note", "Your uploaded images are used for this exercise and are not saved as test history. Check numbers, signs, units, and option order carefully.");
+    const note = el("div", "ed-note", "Vexel does not save this exercise as chat history. Images are sent to Gemini for processing, so avoid uploading private information. Check numbers, signs, units, and option order carefully.");
     body.append(note);
     const imageRow = el("div", "ed-image-row");
     state.images.forEach((image, index) => {
@@ -490,6 +501,7 @@
   }
 
   async function startImageSolving() {
+    const requestId = ++requestSequence;
     for (const question of state.extractedQuestions) {
       question.question = String(question.question || "").trim();
       question.choices = (question.choices || []).map((choice, index) => ({
@@ -518,6 +530,7 @@
         })),
         images: state.images.map((image) => ({ mimeType: image.mimeType, data: image.data }))
       });
+      if (requestId !== requestSequence) return;
       validateClientQuiz(data.quiz, data.quizToken, state.extractedQuestions.length);
       state.quiz = data.quiz;
       state.quizToken = data.quizToken;
@@ -528,6 +541,7 @@
       state.isImage = true;
       renderQuestion();
     } catch (error) {
+      if (requestId !== requestSequence) return;
       showError("Couldn't prepare the answer key", error.message, renderImageReview);
     }
   }
@@ -561,7 +575,7 @@
     const ordinal = raw.match(/\b(first|1st|one|second|2nd|two|third|3rd|three|fourth|4th|four|fifth|5th|five|sixth|6th|six|seventh|7th|seven|eighth|8th|eight)\s+(?:option|choice|answer)\b/i) ||
       raw.match(/\b(the\s+)?(first|1st|one|second|2nd|two|third|3rd|three|fourth|4th|four|fifth|5th|five|sixth|6th|six|seventh|7th|seven|eighth|8th|eight)\b/i);
     if (ordinal) {
-      const word = (ordinal[1] && ordinal[2]) ? ordinal[2].toLowerCase() : ordinal[1].toLowerCase();
+      const word = ordinal[2] !== undefined ? ordinal[2].toLowerCase() : ordinal[1].toLowerCase();
       const ordinals = { first: 0, "1st": 0, one: 0, second: 1, "2nd": 1, two: 1, third: 2, "3rd": 2, three: 2, fourth: 3, "4th": 3, four: 3, fifth: 4, "5th": 4, five: 4, sixth: 5, "6th": 5, six: 5, seventh: 6, "7th": 6, seven: 6, eighth: 7, "8th": 7, eight: 7 };
       const optionIndex = ordinals[word];
       if (optionIndex < question.choices.length) return { choiceId: question.choices[optionIndex].id };
@@ -806,6 +820,34 @@
 
   async function submitTest() {
     if (state.submitting || !state.quizToken) return;
+    const requestId = ++requestSequence;
+    const currentQuestion = state.quiz.questions[state.index];
+    const currentInput = root.querySelector(".ed-question-card .ed-field");
+    if (currentQuestion && currentInput) {
+      if (currentQuestion.type === "short") {
+        state.answers[currentQuestion.id] = { text: currentInput.value };
+      } else if (currentInput.value.trim() && !state.answers[currentQuestion.id]?.choiceId) {
+        const current = state.answers[currentQuestion.id] || {};
+        state.answers[currentQuestion.id] = Object.assign({}, current, { typedDraft: currentInput.value });
+      }
+    }
+    for (const question of state.quiz.questions) {
+      const draft = state.answers[question.id];
+      if (question.type === "mcq" && draft?.typedDraft?.trim() && !draft.choiceId) {
+        const mapped = mapTypedChoice(question, draft.typedDraft);
+        if (mapped.error) {
+          state.index = state.quiz.questions.findIndex((item) => item.id === question.id);
+          renderQuestion();
+          const feedback = root.querySelector(".ed-feedback");
+          if (feedback) {
+            feedback.className = "ed-feedback ed-inline-error";
+            feedback.textContent = mapped.error + " Choose an option or correct this typed answer before submitting.";
+          }
+          return;
+        }
+        state.answers[question.id] = { choiceId: mapped.choiceId };
+      }
+    }
     const answered = state.quiz.questions.filter((question) => {
       const answer = state.answers[question.id];
       return question.type === "mcq" ? Boolean(answer?.choiceId) : Boolean(String(answer?.text || "").trim());
@@ -821,6 +863,7 @@
     showLoading("Marking your answers", "Vexel is calculating the score and preparing explanations. If evaluation fails, your answers remain available to retry.");
     try {
       const data = await api("grade", { quizToken: state.quizToken, answers: answers });
+      if (requestId !== requestSequence) return;
       if (!data.result || !Array.isArray(data.result.results) || data.result.results.length !== state.quiz.questions.length ||
           !Number.isFinite(data.result.earnedMarks) || !Number.isFinite(data.result.maxMarks)) {
         throw new Error("Vexel returned an incomplete grading result. Your answers are preserved; please retry.");
@@ -829,6 +872,7 @@
       state.mode = "results";
       renderResults();
     } catch (error) {
+      if (requestId !== requestSequence) return;
       showError("Couldn't grade your answers", error.message + " Your answers have been kept.", () => submitTest());
     } finally {
       state.submitting = false;
@@ -847,7 +891,8 @@
     const stats = el("div", "ed-stats");
     [
       ["Correct", result.correct, "ed-stat-correct"],
-      ["Incorrect / partial", result.incorrect, "ed-stat-wrong"],
+      ["Incorrect", result.incorrect, "ed-stat-wrong"],
+      ["Partial", result.partiallyCorrect || 0, "ed-stat-partial"],
       ["Unanswered", result.unanswered, "ed-stat-neutral"]
     ].forEach(([label, value, className]) => {
       const tile = el("div", "ed-stat " + className);
