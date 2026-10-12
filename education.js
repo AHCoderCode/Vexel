@@ -209,7 +209,7 @@
 
   function topicFromText(text) {
     return String(text || "")
-      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|topic|subject|a|an|the|this|these|on|about|for|please|me|with|and|of|i|want|you|can|could|would|should|like|in|from|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|chapter|notes?|document|file|pdf|content|study|material|worksheet|uploaded|attached|o level|a level|gcse|igcse|ib|ap|level|15-question)\b/gi, " ")
+      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|topic|subject|a|an|the|this|these|on|about|for|please|me|with|and|of|i|want|you|can|could|would|should|like|to|in|from|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|chapter|notes?|document|file|pdf|content|study|material|worksheet|uploaded|attached|o level|a level|gcse|igcse|ib|ap|level|15-question)\b/gi, " ")
       .replace(/\b\d+\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/gi, " ")
       .replace(/\b\d+\b/g, " ")
       .replace(/\s+/g, " ")
