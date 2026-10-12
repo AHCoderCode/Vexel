@@ -150,6 +150,9 @@ body.education-open { overflow: hidden; }
 @keyframes ed-spin { to { transform: rotate(360deg); } }
 .ed-row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .ed-progress-title { margin: 0 0 9px; font-size: 13px; font-weight: 700; }
+.ed-question-meta { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.ed-timer-label { color: var(--text-2, #b5b5b5); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ed-timer-label.ed-timer-urgent { color: #ff8888; font-weight: 800; }
 .ed-progress { width: 100%; height: 6px; margin-bottom: 18px; overflow: hidden; border-radius: 99px; background: var(--surface-3, #383838); }
 .ed-progress-bar { height: 100%; border-radius: inherit; background: var(--accent, #8b7cf6); transition: width .2s ease; }
 .ed-question-card { padding: clamp(18px, 3vw, 28px); }
@@ -245,6 +248,8 @@ body.education-open { overflow: hidden; }
   .ed-header { min-height: 75px; padding: 12px 14px; gap: 8px; }
   .ed-heading h1 { font-size: 19px; }
   .ed-heading p { font-size: 11px; }
+  .ed-question-meta { gap: 6px; }
+  .ed-timer-label { font-size: 11px; }
   .ed-close { padding: 8px 10px; font-size: 12px; }
   .ed-main { padding: 14px 12px calc(24px + env(safe-area-inset-bottom)); }
   .ed-panel { padding: 15px; border-radius: 13px; }
