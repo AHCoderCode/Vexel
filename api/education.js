@@ -254,6 +254,7 @@ async function generateQuiz(body) {
   const sourceText = cleanText(body.sourceText, 12000);
   const topic = cleanText(body.topic, 300);
   const count = Math.min(30, Math.max(1, Number.isInteger(body.count) ? body.count : 10));
+  const durationMinutes = Number.isInteger(body.durationMinutes) ? Math.min(180, Math.max(0, body.durationMinutes)) : 0;
   const difficulty = cleanText(body.difficulty, 50) || "Medium";
   const level = cleanText(body.level, 120) || "General";
   if (!topic || topic.length < 2) {
@@ -328,8 +329,8 @@ async function generateQuiz(body) {
 
   const sessionId = crypto.randomUUID();
   const title = cleanText(parsed.title, 160) || topic + " Test";
-  const safe = { id: sessionId, title, subject: cleanText(parsed.subject, 160) || topic, difficulty, level, questions: questions.map(safeQuestion) };
-  return { quiz: safe, quizToken: makeSessionToken({ kind: "quiz", id: sessionId, title, subject: safe.subject, difficulty, questions }) };
+  const safe = { id: sessionId, title, subject: cleanText(parsed.subject, 160) || topic, difficulty, level, durationMinutes, questions: questions.map(safeQuestion) };
+  return { quiz: safe, quizToken: makeSessionToken({ kind: "quiz", id: sessionId, title, subject: safe.subject, difficulty, durationMinutes, questions }) };
 }
 
 async function extractImageQuestions(body) {
