@@ -4,7 +4,7 @@ const MAX_BODY_CHARS = 4 * 1024 * 1024;
 const MAX_IMAGES = 4;
 const MAX_IMAGE_BYTES = 2.4 * 1024 * 1024;
 const MAX_QUESTIONS = 30;
-const SESSION_TTL_MS = 90 * 60 * 1000;
+const SESSION_TTL_MS = 4 * 60 * 60 * 1000;
 
 function respondError(res, status, code, message, retryable = false, extra = {}) {
   return res.status(status).json({ error: { code, message, retryable, ...extra } });
