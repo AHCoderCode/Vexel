@@ -1147,11 +1147,13 @@
   }
 
   console.info("[Vexel education] Interactive test and beta image solver loaded.");
-})();
-
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !root.hidden) {
       closeEducation();
     }
   }, true);
+})();
+
+
+
