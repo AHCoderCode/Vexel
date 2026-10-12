@@ -213,7 +213,7 @@
       .replace(/\b\d+\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/gi, " ")
       .replace(/\b\d+\b/g, " ")
       .replace(/\s+/g, " ")
-      .replace(/^[\s:,-]+|[\s:,-]+$/g, "")
+      .replace(/^[\s:,.!?-]+|[\s:,.!?-]+$/g, "")
       .trim();
   }
 
