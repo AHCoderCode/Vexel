@@ -223,12 +223,28 @@
 
   function topicFromText(text) {
     return String(text || "")
-      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|topic|subject|a|an|the|this|these|on|about|for|please|me|with|and|of|i|want|you|can|could|would|should|like|to|in|from|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|chapter|notes?|document|file|pdf|content|study|material|worksheet|uploaded|attached|o level|a level|gcse|igcse|ib|ap|level|15-question)\b/gi, " ")
+      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|topic|subject|a|an|the|this|these|on|about|for|please|me|with|and|of|i|want|you|can|could|would|should|like|to|in|from|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|chapter|notes?|document|file|pdf|content|study|material|worksheet|uploaded|attached|o[- ]?level|a[- ]?level|gcse|igcse|ib|ap|level|grade|class|year|15-question)\b/gi, " ")
       .replace(/\b\d+\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/gi, " ")
       .replace(/\b\d+\b/g, " ")
       .replace(/\s+/g, " ")
       .replace(/^[\s:,.!?-]+|[\s:,.!?-]+$/g, "")
       .trim();
+  }
+
+  function levelFromText(text) {
+    const value = String(text || "");
+    if (/\bo[- ]?level\b/i.test(value)) return "O Level";
+    if (/\ba[- ]?level\b/i.test(value)) return "A Level";
+    if (/\bigcse\b/i.test(value)) return "IGCSE";
+    if (/\bgcse\b/i.test(value)) return "GCSE";
+    const grade = value.match(/\b(grade|class|year)\s*[-:]?\s*(\d{1,2})\b/i);
+    if (grade) {
+      const label = grade[1].charAt(0).toUpperCase() + grade[1].slice(1).toLowerCase();
+      return label + " " + Number(grade[2]);
+    }
+    if (/\bib\b/i.test(value)) return "IB";
+    if (/\bap\b/i.test(value)) return "AP";
+    return "General";
   }
 
   function isQuizIntent(text) {
@@ -1005,10 +1021,15 @@
   function saveVisibleDraft(question, input) {
     if (question.type === "short") {
       state.answers[question.id] = { text: input.value };
-    } else if (input.value.trim()) {
-      const current = state.answers[question.id] || {};
-      state.answers[question.id] = Object.assign({}, current, { typedDraft: input.value });
+      return;
     }
+
+    const current = Object.assign({}, state.answers[question.id] || {});
+    if (input.value.trim()) current.typedDraft = input.value;
+    else delete current.typedDraft;
+
+    if (current.choiceId || current.typedDraft) state.answers[question.id] = current;
+    else delete state.answers[question.id];
   }
 
   async function submitTest(autoSubmit = false) {
@@ -1016,14 +1037,7 @@
     const requestId = ++requestSequence;
     const currentQuestion = state.quiz.questions[state.index];
     const currentInput = root.querySelector(".ed-question-card .ed-field");
-    if (currentQuestion && currentInput) {
-      if (currentQuestion.type === "short") {
-        state.answers[currentQuestion.id] = { text: currentInput.value };
-      } else if (currentInput.value.trim() && !state.answers[currentQuestion.id]?.choiceId) {
-        const current = state.answers[currentQuestion.id] || {};
-        state.answers[currentQuestion.id] = Object.assign({}, current, { typedDraft: currentInput.value });
-      }
-    }
+    if (currentQuestion && currentInput) saveVisibleDraft(currentQuestion, currentInput);
     for (const question of state.quiz.questions) {
       const draft = state.answers[question.id];
       if (question.type === "mcq" && draft?.typedDraft?.trim() && !draft.choiceId) {
@@ -1207,7 +1221,7 @@
           count: count,
           difficulty: difficulty,
           durationMinutes: durationMinutes,
-          level: /\bo level\b/i.test(requestText) ? "O Level" : "General"
+          level: levelFromText(requestText)
         };
         if (!topic || topic.length < 2) renderTopicClarification(requestText, count, difficulty, sourceText, durationMinutes, spec.level);
         else startGeneratedTest(spec);
