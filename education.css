@@ -216,13 +216,14 @@ body.education-open { overflow: hidden; }
 .ed-score { margin: 8px 0 0; color: var(--accent, #a394ff); font-size: clamp(42px, 9vw, 68px); font-weight: 850; letter-spacing: -.04em; }
 .ed-results-summary h2 { margin-top: 0; }
 .ed-results-summary > p { margin-bottom: 0; }
-.ed-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 24px 0 17px; }
+.ed-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 24px 0 17px; }
 .ed-stat { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--border, rgba(255,255,255,.1)); border-radius: 10px; background: var(--surface-2, #2a2a2a); }
 .ed-stat span { color: var(--text-2, #b5b5b5); font-size: 11px; }
 .ed-stat strong { font-size: 22px; }
 .ed-stat-correct strong { color: #42c69a; }
 .ed-stat-wrong strong { color: #ed8888; }
 .ed-stat-neutral strong { color: var(--text-2, #b5b5b5); }
+.ed-stat-partial strong { color: #ffd18a; }
 .ed-review-heading { margin: 28px 0 10px; font-size: 20px; }
 .ed-result-card { padding: 19px; }
 .ed-result-card h3 { font-size: 15px; }
@@ -254,7 +255,7 @@ body.education-open { overflow: hidden; }
   .ed-actions, .ed-sticky-actions { gap: 7px; }
   .ed-sticky-actions .ed-button { flex: 1 1 auto; }
   .ed-meta-grid { grid-template-columns: minmax(0, 1fr) minmax(105px, .55fr); gap: 9px; }
-  .ed-stats { gap: 6px; }
+  .ed-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
   .ed-stat { padding: 9px 5px; }
   .ed-stat span { font-size: 10px; }
   .ed-stat strong { font-size: 19px; }
