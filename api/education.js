@@ -82,7 +82,7 @@ const QUIZ_RESPONSE_SCHEMA = {
               required: ["id", "text"]
             }
           },
-          correctChoiceId: { type: "STRING" },
+          correctChoiceId: { type: "STRING", nullable: true },
           explanation: { type: "STRING" },
           choiceExplanations: {
             type: "OBJECT",
@@ -400,8 +400,8 @@ function parseJson(text) {
   let value = String(text || "").replace(/^\uFEFF/, "").trim();
   const fence = String.fromCharCode(96).repeat(3);
   value = value
-    .replace(new RegExp("^" + fence + "(?:json)?\\\\s*", "i"), "")
-    .replace(new RegExp("\\\\s*" + fence + "$"), "")
+    .replace(/^\`\`\`(?:json)?\s*/i, "")
+    .replace(/\s*\`\`\`$/, "")
     .trim();
 
   const candidates = [value, ...balancedJsonValues(value)];
