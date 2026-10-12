@@ -247,7 +247,7 @@
       /\b(image|photo|picture|worksheet|document|page)\b[\s\S]{0,90}\b(questions?|quiz|test|solve|answer|ask me|check)\b/i.test(value);
   }
 
-  function renderTopicClarification(request, count, difficulty, sourceText = "", durationMinutes = 0) {
+  function renderTopicClarification(request, count, difficulty, sourceText = "", durationMinutes = 0, level = "General") {
     state.mode = "topic";
     state.originalRequest = request;
     const body = screen("Create an interactive test", "One detail is missing. Tell Vexel what subject or topic the test should cover.");
@@ -267,7 +267,7 @@
         count: count,
         difficulty: difficulty,
         durationMinutes: durationMinutes,
-        level: "General"
+        level: level
       });
     });
     panel.append(el("label", "ed-label", "Test subject or topic"));
@@ -554,7 +554,10 @@
     if (state.images.length < MAX_IMAGE_FILES) {
       imageActions.append(makeButton("Add another page", "ed-button ed-button-secondary", () => choosePageAction("add")));
     }
-    imageActions.append(makeButton("Replace all images", "ed-button ed-button-secondary", () => startImageInput()));
+    imageActions.append(makeButton("Replace all images", "ed-button ed-button-secondary", () => {
+      if (!window.confirm("Replace the current worksheet pages? Any manual text corrections on this screen will reset.")) return;
+      startImageInput();
+    }));
     body.append(imageActions);
 
     state.extractedQuestions.forEach((question, index) => {
@@ -1192,7 +1195,7 @@
           durationMinutes: durationMinutes,
           level: /\bo level\b/i.test(requestText) ? "O Level" : "General"
         };
-        if (!topic || topic.length < 2) renderTopicClarification(requestText, count, difficulty, sourceText, durationMinutes);
+        if (!topic || topic.length < 2) renderTopicClarification(requestText, count, difficulty, sourceText, durationMinutes, spec.level);
         else startGeneratedTest(spec);
         return;
       }
