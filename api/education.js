@@ -265,7 +265,7 @@ async function generateQuiz(body) {
 
   const prompt = [
     "Create an accurate educational multiple-choice test using the request below.",
-    "Return JSON shaped like: {\"title\":\"Python Basics Test\",\"subject\":\"Python\",\"difficulty\":\"Medium\",\"questions\":[{\"question\":\"Question text\",\"choices\":[{\"id\":\"A\",\"text\":\"Choice text\"},{\"id\":\"B\",\"text\":\"Choice text\"},{\"id\":\"C\",\"text\":\"Choice text\"},{\"id\":\"D\",\"text\":\"Choice text\"}],\"correctChoiceId\":\"A\",\"explanation\":\"Why this is correct\",\"topic\":\"Topic\"}]} Use only one correctChoiceId value from A, B, C, or D.",
+    "Return JSON shaped like: {\"title\":\"Python Basics Test\",\"subject\":\"Python\",\"difficulty\":\"Medium\",\"questions\":[{\"question\":\"Question text\",\"choices\":[{\"id\":\"A\",\"text\":\"Choice text\"},{\"id\":\"B\",\"text\":\"Choice text\"},{\"id\":\"C\",\"text\":\"Choice text\"},{\"id\":\"D\",\"text\":\"Choice text\"}],\"correctChoiceId\":\"A\",\"explanation\":\"Why this is correct\",\"choiceExplanations\":{\"A\":\"Why option A is correct or incorrect\",\"B\":\"Why option B is correct or incorrect\",\"C\":\"Why option C is correct or incorrect\",\"D\":\"Why option D is correct or incorrect\"},\"topic\":\"Topic\"}]} Use one correctChoiceId value from A, B, C, or D. For every option, provide a short, accurate, option-specific explanation in choiceExplanations keyed to the displayed A-D order.",
     "Make exactly " + count + " questions. Every question must have exactly four unique, plausible options and exactly one defensible correct option.",
     "Do not use trick wording unless requested. Avoid duplicate or near-duplicate questions. Write original questions at difficulty " + difficulty + " for level " + level + ".",
     "Use factual, unambiguous answers. The explanation must explain why the correct answer is right and, when helpful, why common distractors are wrong.",
@@ -317,6 +317,10 @@ async function generateQuiz(body) {
       choices: choices.map((choice, i) => ({ id: String.fromCharCode(65 + i), text: choice.text })),
       correctChoiceId: String.fromCharCode(65 + answerIndex),
       explanation: cleanText(raw.explanation, 3000) || "Review the definition and reasoning that support this answer.",
+      choiceExplanations: Object.fromEntries(["A", "B", "C", "D"].map((letter, optionIndex) => [
+        letter,
+        cleanText(raw.choiceExplanations && raw.choiceExplanations[letter], 1200)
+      ])),
       topic: cleanText(raw.topic, 200) || topic,
       marks: 1
     };
@@ -512,7 +516,13 @@ async function gradeQuiz(body) {
         maxMarks: question.marks,
         explanation: question.explanation || "",
         correctPoints: isCorrect ? ["You selected the correct option."] : [],
-        errors: !answered ? ["No answer was submitted."] : (isCorrect ? [] : ["Your selected option does not match the answer key."])
+        errors: !answered
+          ? ["No answer was submitted."]
+          : (isCorrect ? [] : [
+              (question.choiceExplanations && question.choiceExplanations[answer.choiceId])
+                ? cleanText(question.choiceExplanations[answer.choiceId], 1200)
+                : "You selected “" + selected.text + "”, while the correct answer is “" + (correct ? correct.text : "unavailable") + "”. Review the explanation to understand the difference."
+            ])
       });
     } else {
       const userAnswer = answer.text.trim();
