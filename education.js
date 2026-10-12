@@ -248,31 +248,33 @@
   }
 
   function isQuizIntent(text) {
-    const value = String(text || "").trim();
-    if (!value) return false;
+    const original = String(text || "").trim();
+    if (!original) return false;
 
-    const explicitAssessment = /\b(\d{1,3}\s*[- ]?\s*questions?|quiz|mcqs?|multiple[- ]choice|exam|examination|practice test|school test|test me|quiz me)\b/i.test(value);
+    // Permit only deliberate commands, not ordinary discussion that happens to mention tests.
+    const command = original.replace(/^(?:(?:please|hey|hi|can you|could you|would you|will you|i want you to|i need you to)\s+)+/i, "").trim();
+    if (!/^(?:generate\s+me\s+(?:a|an)\s+test|create\s+(?:me\s+)?(?:a|an)\s+test|test\s+me)\b/i.test(command)) return false;
+
+    // Do not route requests for software tests into the educational assessment UI.
     const softwareTestRequest =
-      /\b(?:unit|integration|end[- ]to[- ]end|e2e|smoke|regression|automated|load|performance|security|api|component|snapshot)\s+tests?\b/i.test(value) ||
-      /\b(?:write|create|make|generate)\s+(?:a\s+)?tests?\s+(?:for|of)\s+(?:my|this|the)\s+(?:code|function|method|component|website|web app|app|api|endpoint)\b/i.test(value) ||
-      /\btest\s+(?:my|this|the)\s+(?:code|function|method|component|website|web app|app|api|endpoint)\b/i.test(value) ||
-      /\b(?:jest|vitest|pytest|mocha|junit|playwright|cypress)\b/i.test(value);
-    if (softwareTestRequest && !explicitAssessment) return false;
+      /\b(?:unit|integration|end[- ]to[- ]end|e2e|smoke|regression|automated|load|performance|security|api|component|snapshot)\s+tests?\b/i.test(original) ||
+      /\b(?:my|this|the)\s+(?:code|function|method|component|website|web app|app|api|endpoint)\b/i.test(original) ||
+      /\b(?:jest|vitest|pytest|mocha|junit|playwright|cypress)\b/i.test(original);
+    if (softwareTestRequest && !/\b(?:biology|chemistry|physics|maths?|history|geography|english|python basics|photosynthesis|grammar|science|chapter|school|o[- ]?level|a[- ]?level|igcse|gcse)\b/i.test(original)) return false;
 
-    if (/\b(what is|explain|define|meaning of)\b[\s\S]{0,40}\b(test|quiz|exam|mcq)\b/i.test(value)) return false;
-    return /\b(create|make|generate|give me|start|take)\b[\s\S]{0,100}\b(test|quiz|mcq|exam|examination|questions?)\b/i.test(value) ||
-      /\b(test me on|quiz me on|quiz me about|test me about|practice exam|practice test)\b/i.test(value) ||
-      /\b(quiz me|test me)\b/i.test(value);
+    if (/\b(?:what is|what does|define|meaning of|explain)\b[\s\S]{0,45}\b(?:test|testing|quiz|exam|mcq)\b/i.test(original) &&
+        !/^(?:generate\s+me\s+(?:a|an)\s+test|create\s+(?:me\s+)?(?:a|an)\s+test|test\s+me)\b/i.test(command)) return false;
+    return true;
   }
 
   function isQuestionSourceIntent(text) {
     const value = String(text || "").trim();
-    if (value.length < 20) return false;
+    if (value.length < 20 || !isQuizIntent(value)) return false;
 
     const transformIntent =
       /\b(?:turn|convert|transform)\b[\s\S]{0,100}\b(?:into|to)\s+(?:a\s+)?(?:test|quiz|exam)\b/i.test(value) ||
-      /\b(?:create|make|generate|build)\s+(?:a\s+)?(?:test|quiz|exam)\s+(?:from|out of|using|based on)\s+(?:this|these|the following|my|provided|pasted|above|below)\b/i.test(value) ||
-      /\b(?:quiz|test)\s+me\s+on\s+(?:the following|these|my|pasted)\s+questions?\b/i.test(value) ||
+      /\b(?:create|generate|make|build)\s+(?:me\s+)?(?:a\s+)?(?:test|quiz|exam)\s+(?:from|out of|using|based on)\s+(?:this|these|the following|my|provided|pasted|above|below)\b/i.test(value) ||
+      /\btest\s+me\s+on\s+(?:the following|these|my|pasted)\s+questions?\b/i.test(value) ||
       /\buse\s+(?:the following|these|my|pasted)\s+questions?\b/i.test(value);
 
     if (!transformIntent) return false;
@@ -283,7 +285,6 @@
     const hasTextAfterColon = colon >= 0 && value.slice(colon + 1).trim().length >= 8;
     return hasQuestionStructure || hasTextAfterColon;
   }
-
   function isImageQuestionIntent(text) {
     const value = String(text || "");
     return /\b(solve|answer|ask me|test me|quiz me|check my answers|extract|read|turn into a test|create|make|generate|quiz|test)\b[\s\S]{0,160}\b(question|worksheet|photo|image|picture|notebook|these|this|them|it|chapter|page|sheet|attached|uploaded)\b/i.test(value) ||
@@ -407,10 +408,11 @@
     const ids = new Set();
     for (const question of quiz.questions) {
       const isMcq = question && question.type === "mcq";
+      const isWritten = question && (question.type === "short" || question.type === "long");
       const validChoices = Array.isArray(question?.choices) &&
         (isMcq
           ? question.choices.length >= 2 && question.choices.every((choice) => choice && choice.id && typeof choice.text === "string" && choice.text.trim())
-          : question.type === "short" && question.choices.length === 0);
+          : isWritten && question.choices.length === 0);
       if (!question || typeof question.id !== "string" || ids.has(question.id) ||
           typeof question.question !== "string" || !question.question.trim() || !validChoices ||
           !Number.isFinite(Number(question.marks)) || Number(question.marks) <= 0) {
@@ -590,7 +592,7 @@
       }
       state.extractedQuestions = data.questions.map((question, index) => ({
         id: String(question.id || ("imgq" + (index + 1))),
-        type: question.type === "mcq" ? "mcq" : "short",
+        type: question.type === "mcq" ? "mcq" : question.type === "long" ? "long" : "short",
         question: String(question.question || ""),
         choices: Array.isArray(question.choices) ? question.choices.map((choice, choiceIndex) => ({
           id: String.fromCharCode(65 + choiceIndex),
@@ -630,7 +632,7 @@
       }
       state.extractedQuestions = data.questions.map((question, index) => ({
         id: String(question.id || ("txtq" + (index + 1))),
-        type: question.type === "mcq" ? "mcq" : "short",
+        type: question.type === "mcq" ? "mcq" : question.type === "long" ? "long" : "short",
         question: String(question.question || ""),
         choices: Array.isArray(question.choices) ? question.choices.map((choice, choiceIndex) => ({
           id: String.fromCharCode(65 + choiceIndex),
@@ -708,7 +710,7 @@
       }));
       card.append(rowHeader);
       if (question.needsClarification || question.clarification) {
-        alertNote(card, "Please check the photo: " + (question.clarification || "Some source text may be unclear."), true);
+        alertNote(card, "Please check the source: " + (question.clarification || "Some source text may be unclear."), true);
       }
       card.append(el("label", "ed-label", "Question text"));
       const text = el("textarea", "ed-field ed-question-editor");
@@ -728,7 +730,7 @@
       const typeWrap = el("div", "");
       typeWrap.append(el("label", "ed-label", "Answer format"));
       const typeSelect = el("select", "ed-field");
-      [["mcq", "Multiple choice"], ["short", "Written answer"]].forEach(([value, label]) => {
+      [["mcq", "Multiple choice"], ["short", "Short answer"], ["long", "Long answer"]].forEach(([value, label]) => {
         const option = el("option", "", label);
         option.value = value;
         option.selected = question.type === value;
@@ -736,7 +738,9 @@
       });
       typeSelect.addEventListener("change", () => {
         question.type = typeSelect.value;
-        if (question.type === "mcq" && question.choices.length < 2) {
+        if (question.type !== "mcq") {
+          question.choices = [];
+        } else if (question.choices.length < 2) {
           question.choices = [
             { id: "A", text: "" }, { id: "B", text: "" },
             { id: "C", text: "" }, { id: "D", text: "" }
@@ -1031,7 +1035,7 @@
     body.append(progress);
 
     const card = el("section", "ed-panel ed-question-card");
-    const typeLabel = el("span", "ed-tag", question.type === "mcq" ? "MULTIPLE CHOICE" : "WRITTEN ANSWER");
+    const typeLabel = el("span", "ed-tag", question.type === "mcq" ? "MULTIPLE CHOICE" : question.type === "long" ? "LONG ANSWER" : "SHORT ANSWER");
     card.append(typeLabel);
     const questionTitle = el("h2", "ed-question-title", question.question);
     card.append(questionTitle);
@@ -1061,8 +1065,11 @@
       answerInput.placeholder = "For example, B, Option B, or the answer text";
       answerInput.value = state.answers[question.id]?.typedDraft || "";
     } else {
-      answerInput.rows = 4;
-      answerInput.placeholder = "Write your answer here. Partial credit may be available after submission.";
+      answerInput.rows = question.type === "long" ? 8 : 4;
+      answerInput.maxLength = 12000;
+      answerInput.placeholder = question.type === "long"
+        ? "Write your developed answer here. Cover the key ideas and explain your reasoning."
+        : "Write a concise answer here. Partial credit may be available after submission.";
       answerInput.value = state.answers[question.id]?.text || "";
       answerInput.addEventListener("input", () => {
         state.answers[question.id] = { text: answerInput.value };
@@ -1137,7 +1144,7 @@
   }
 
   function saveVisibleDraft(question, input) {
-    if (question.type === "short") {
+    if (question.type !== "mcq") {
       state.answers[question.id] = { text: input.value };
       return;
     }
@@ -1310,7 +1317,7 @@
       const prompt = document.getElementById("promptInput");
       const text = prompt ? prompt.value.trim() : "";
       const images = composerImages();
-      if (images.length && (!text || isImageQuestionIntent(text) || isQuizIntent(text))) {
+      if (images.length && isQuizIntent(text)) {
         clearComposerImages();
         if (prompt) {
           prompt.value = "";
