@@ -228,9 +228,9 @@
 
   function isImageQuestionIntent(text) {
     const value = String(text || "");
-    return /\b(solve|ask me|test me|quiz me|check my answers|extract|read|turn into a test|make a quiz from)\b[\s\S]{0,120}\b(question|worksheet|photo|image|picture|notebook|these|this)\b/i.test(value) ||
-      /\b(questions?|worksheet)\s+from\s+(this|the|an?)\s+(image|photo|picture|worksheet)\b/i.test(value) ||
-      /\b(image|photo|picture|worksheet)\b[\s\S]{0,70}\b(questions?|quiz|test|solve|answer)\b/i.test(value);
+    return /\b(solve|answer|ask me|test me|quiz me|check my answers|extract|read|turn into a test|create|make|generate|quiz|test)\b[\s\S]{0,160}\b(question|worksheet|photo|image|picture|notebook|these|this|them|it|chapter|page|sheet|attached|uploaded)\b/i.test(value) ||
+      /\b(questions?|worksheet|chapter|page)\s+from\s+(this|the|an?)\s+(image|photo|picture|worksheet|document|page)\b/i.test(value) ||
+      /\b(image|photo|picture|worksheet|document|page)\b[\s\S]{0,90}\b(questions?|quiz|test|solve|answer|ask me|check)\b/i.test(value);
   }
 
   function renderTopicClarification(request, count, difficulty, sourceText = "", durationMinutes = 0) {
