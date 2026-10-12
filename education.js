@@ -1317,7 +1317,7 @@
       const prompt = document.getElementById("promptInput");
       const text = prompt ? prompt.value.trim() : "";
       const images = composerImages();
-      if (images.length && (isImageQuestionIntent(text) || isQuizIntent(text))) {
+      if (images.length && isQuizIntent(text)) {
         clearComposerImages();
         if (prompt) {
           prompt.value = "";
