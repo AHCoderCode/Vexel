@@ -442,7 +442,13 @@ async function prepareImageQuiz(body) {
       throw error;
     }
     const confidence = Number(solution.confidence);
-    const needsClarification = Boolean(solution.needsClarification) || (Number.isFinite(confidence) && confidence < 0.45);
+    if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1) {
+      const error = new Error("Vexel could not validate its confidence assessment for one question. Review the image and try again.");
+      error.status = 422;
+      error.code = "INVALID_IMAGE_CONFIDENCE";
+      throw error;
+    }
+    const needsClarification = Boolean(solution.needsClarification) || confidence < 0.45;
     if (needsClarification) {
       const error = new Error("Vexel could not confidently determine the answer to: " + question.question.slice(0, 160) + ". Review the image or correct the question text before submitting answers.");
       error.status = 422;
