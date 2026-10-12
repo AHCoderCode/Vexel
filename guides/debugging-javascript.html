@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Debug JavaScript Step by Step | Vexel AI Guides</title>
+  <meta name="description" content="A beginner-friendly browser debugging method: reproduce errors, inspect the developer console, isolate the smallest cause, and test a focused fix.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://vexelai-zeta.vercel.app/guides/debugging-javascript.html">
+  <meta name="google-adsense-account" content="ca-pub-5962202637347912">
+  <meta name="theme-color" content="#212121">
+  <link rel="icon" href="/icons/vexel-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/content.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="/"><span class="brand-mark">V</span><span>Vexel AI</span></a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="/guides.html">AI Guides</a>
+    <a href="/about.html">About</a>
+    <a href="/contact.html">Contact</a>
+    <a href="/login.html">Log in</a>
+    <a class="nav-cta" href="/signup.html">Try Vexel</a>
+  </nav>
+</header>
+
+<main class="content-wrap">
+  <div class="breadcrumb"><a href="/">Home</a> / <a href="/guides.html">AI Guides</a> / Debugging JavaScript</div>
+  <article class="article">
+    <header class="hero">
+      <span class="eyebrow">BEGINNER WEB DEVELOPMENT</span>
+      <h1>Debug JavaScript step by step</h1>
+      <p class="lead">When a website feature does not work, rewriting the whole project is rarely the best first move. A repeatable debugging process helps you identify the exact failure, understand its cause, and test the smallest change that should fix it.</p>
+      <p class="small-meta">A practical guide · About 8 minutes</p>
+    </header>
+    <p>JavaScript bugs can appear as a blank page, a button that does nothing, an incorrect result, or an error that appears only after a certain action. The most useful starting point is a specific, repeatable description of the failure rather than a guess about the cause.</p>
+    <h2 id="reproduce">1. Reproduce the problem reliably</h2>
+    <p>Write down what you expected, what actually happened, and the steps needed to see it. For example: “On the signup page, when both password fields contain the same six-character value and I click Create account, no message appears.” This is much more useful than “signup is broken.”</p>
+    <p>Try the shortest sequence that produces the problem. Note whether it occurs every time, only for one input, or only after reloading the page. Do not change several unrelated things before you have recorded the original behaviour.</p>
+    <h2 id="console">2. Read the browser console</h2>
+    <p>In Chrome or Edge on Windows, open the page, press <code>F12</code>, and choose the <strong>Console</strong> tab. You can also right-click the page, choose Inspect, and open Console. Reload the page to see startup errors, then repeat the action that triggers the bug.</p>
+    <ul>
+      <li><strong>SyntaxError:</strong> the JavaScript text cannot be parsed, often because of a missing bracket, quote, or comma.</li>
+      <li><strong>ReferenceError:</strong> code refers to a name that is not available where it is used, such as a misspelled variable.</li>
+      <li><strong>TypeError:</strong> an operation is being used with a value that does not support it; for example, calling a method on <code>null</code>.</li>
+      <li><strong>Network or API error:</strong> a request may have failed, credentials may be misconfigured, or a remote service may have returned an error.</li>
+    </ul>
+    <p>Click the file-and-line link beside an error to inspect the relevant code. The first error can cause several later errors, so start at the earliest relevant failure instead of fixing each downstream message blindly.</p>
+    <h2 id="isolate">3. Isolate the smallest relevant section</h2>
+    <p>Find the button, form, function, or request involved. Check that the HTML element has the ID the script expects, that the script loads, and that the event listener is attached after the element exists. For example, this listener will fail if there is no element with the matching ID at the moment the code runs:</p>
+    <pre>const button = document.getElementById("saveButton");
+
+button.addEventListener("click", () => {
+  console.log("Save button was clicked");
+});</pre>
+    <p>If the HTML actually uses <code>id="saveBtn"</code>, then <code>getElementById("saveButton")</code> returns <code>null</code>. Confirm the actual ID before adding more code. A basic check can make the failure easier to spot:</p>
+    <pre>const button = document.getElementById("saveButton");
+
+if (!button) {
+  console.error("The save button was not found in the HTML.");
+} else {
+  button.addEventListener("click", () => {
+    console.log("Save button was clicked");
+  });
+}</pre>
+    <p>This is an illustration, not a universal patch: the correct ID and placement depend on your page. First check the actual DOM and script loading order.</p>
+    <h2 id="trace">4. Trace values instead of guessing</h2>
+    <p>Use focused logs around the point where you suspect the value changes:</p>
+    <pre>console.log("Form submit started");
+console.log("Username is present:", Boolean(username));
+console.log("Validation passed:", isValid);</pre>
+    <p>Prefer logging whether sensitive values are present instead of printing passwords, session tokens, personal information, or private chat contents. Remove temporary logs after diagnosing the issue if they are no longer needed.</p>
+    <p>For more complicated code, use breakpoints in the Sources tab. A breakpoint pauses execution so you can inspect the current line and the variables available at that point. Step through a few lines to see exactly where behaviour differs from what you expected.</p>
+    <h2 id="fix">5. Test one focused change</h2>
+    <ol>
+      <li>State the likely cause and the evidence supporting it.</li>
+      <li>Change only the code needed to address that cause.</li>
+      <li>Repeat the original steps and confirm the expected outcome.</li>
+      <li>Test a nearby edge case, such as an empty field or an invalid value.</li>
+      <li>Check the console again for new errors.</li>
+    </ol>
+    <p>If the fix does not work, revert that change or reconsider the hypothesis. Stacking guesses on top of guesses makes it harder to know what changed the result.</p>
+    <h2 id="ask-ai">6. Give an AI assistant enough evidence</h2>
+    <p>When asking AI for help, share a minimal reproducible example: the exact error, the relevant HTML, the event handler or function, and the browser or runtime. Explain what you expected and what happened. Ask for the smallest patch first and request an explanation of why the error occurs.</p>
+    <div class="example">
+      <h3>Example debugging request</h3>
+      <pre>Environment: Chrome on Windows, plain HTML/CSS/JavaScript.
+Expected: clicking Save shows a success message.
+Actual: nothing happens.
+Console: [paste the exact relevant error]
+Relevant HTML: [small snippet]
+Relevant JavaScript: [event listener/function]
+
+Please identify the earliest likely failure, explain it simply,
+and propose the smallest fix. Do not rewrite unrelated files.
+Give me one or two tests that can confirm the fix.</pre>
+    </div>
+    <p>Review the suggested change before using it. AI can invent APIs, overlook how your files connect, or confidently diagnose the wrong line. Verify the patch in your own project and keep a working copy or version-control commit so you can undo a bad change.</p>
+    <h2 id="secrets">Protect your project while debugging</h2>
+    <ul>
+      <li>Never paste secret API keys, service-role keys, passwords, or authentication tokens into a public issue or chat.</li>
+      <li>Share the smallest snippet needed; remove real names, account details, and private data.</li>
+      <li>Keep server-only credentials in environment variables and server-side code, not browser JavaScript.</li>
+      <li>Do not disable security checks just to make an error disappear; understand the cause and use a safe fix.</li>
+    </ul>
+    <div class="callout"><h3>A dependable rule</h3><p>Reproduce the bug, inspect evidence, isolate the smallest cause, make one change, and verify the result. This approach is slower than guessing for a minute, but usually faster than repeatedly rewriting code that was already working.</p></div>
+    <div class="related"><strong>Continue learning:</strong> <a href="/guides/prompt-writing.html">Ask AI for focused code help</a> · <a href="/guides/checking-ai-answers.html">Verify AI answers</a> · <a href="/guides.html">All guides</a></div>
+  </article>
+</main>
+<footer class="site-footer">
+  <span>© 2026 Vexel AI · Independent AI learning resource</span>
+  <nav aria-label="Footer navigation">
+    <a href="/guides.html">AI Guides</a><a href="/about.html">About</a><a href="/contact.html">Contact</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a>
+  </nav>
+</footer>
+</body>
+</html>
