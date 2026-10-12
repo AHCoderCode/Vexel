@@ -61,7 +61,134 @@ function contentParts(prompt, images) {
   return parts;
 }
 
-async function callGemini(prompt, images = [], wantsJson = true, validator = null) {
+const QUIZ_RESPONSE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    title: { type: "STRING" },
+    subject: { type: "STRING" },
+    difficulty: { type: "STRING" },
+    questions: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          type: { type: "STRING", enum: ["mcq", "short", "long"] },
+          question: { type: "STRING" },
+          choices: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: { id: { type: "STRING" }, text: { type: "STRING" } },
+              required: ["id", "text"]
+            }
+          },
+          correctChoiceId: { type: "STRING" },
+          explanation: { type: "STRING" },
+          choiceExplanations: {
+            type: "OBJECT",
+            properties: {
+              A: { type: "STRING" }, B: { type: "STRING" },
+              C: { type: "STRING" }, D: { type: "STRING" }
+            }
+          },
+          referenceAnswer: { type: "STRING" },
+          rubric: { type: "ARRAY", items: { type: "STRING" } },
+          marks: { type: "NUMBER" },
+          topic: { type: "STRING" }
+        },
+        required: ["type", "question", "choices", "correctChoiceId", "explanation", "choiceExplanations", "referenceAnswer", "rubric", "marks", "topic"]
+      }
+    }
+  },
+  required: ["title", "subject", "difficulty", "questions"]
+};
+
+const QUESTION_EXTRACTION_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    title: { type: "STRING" },
+    questions: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          id: { type: "STRING" },
+          type: { type: "STRING", enum: ["mcq", "short", "long"] },
+          question: { type: "STRING" },
+          choices: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: { id: { type: "STRING" }, text: { type: "STRING" } },
+              required: ["id", "text"]
+            }
+          },
+          marks: { type: "NUMBER" },
+          needsClarification: { type: "BOOLEAN" },
+          clarification: { type: "STRING" }
+        },
+        required: ["id", "type", "question", "choices", "marks", "needsClarification", "clarification"]
+      }
+    }
+  },
+  required: ["title", "questions"]
+};
+
+const IMAGE_SOLUTIONS_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    solutions: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          id: { type: "STRING" },
+          correctChoiceId: { type: "STRING", nullable: true },
+          referenceAnswer: { type: "STRING" },
+          explanation: { type: "STRING" },
+          rubric: { type: "ARRAY", items: { type: "STRING" } },
+          choiceExplanations: {
+            type: "OBJECT",
+            properties: {
+              A: { type: "STRING" }, B: { type: "STRING" },
+              C: { type: "STRING" }, D: { type: "STRING" },
+              E: { type: "STRING" }, F: { type: "STRING" },
+              G: { type: "STRING" }, H: { type: "STRING" }
+            }
+          },
+          confidence: { type: "NUMBER" },
+          needsClarification: { type: "BOOLEAN" },
+          clarification: { type: "STRING" }
+        },
+        required: ["id", "correctChoiceId", "referenceAnswer", "explanation", "rubric", "choiceExplanations", "confidence", "needsClarification", "clarification"]
+      }
+    }
+  },
+  required: ["solutions"]
+};
+
+const EVALUATION_RESPONSE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    results: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          id: { type: "STRING" },
+          marksAwarded: { type: "NUMBER" },
+          explanation: { type: "STRING" },
+          correctPoints: { type: "ARRAY", items: { type: "STRING" } },
+          errors: { type: "ARRAY", items: { type: "STRING" } }
+        },
+        required: ["id", "marksAwarded", "explanation", "correctPoints", "errors"]
+      }
+    }
+  },
+  required: ["results"]
+};
+
+async function callGemini(prompt, images = [], wantsJson = true, validator = null, responseSchema = null) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     const error = new Error("Vexel's AI service is not configured. The site owner needs to check GEMINI_API_KEY in Vercel.");
@@ -93,7 +220,14 @@ async function callGemini(prompt, images = [], wantsJson = true, validator = nul
             signal: controller.signal,
             body: JSON.stringify({
               contents: [{ role: "user", parts: contentParts(prompt, images) }],
-              ...(wantsJson ? { generationConfig: { responseMimeType: "application/json", temperature: 0.2, maxOutputTokens: 16384 } } : {})
+              ...(wantsJson ? {
+                generationConfig: {
+                  responseMimeType: "application/json",
+                  temperature: 0.2,
+                  maxOutputTokens: 16384,
+                  ...(responseSchema ? { responseSchema } : {})
+                }
+              } : {})
             })
           }
         );
@@ -201,21 +335,89 @@ async function callGemini(prompt, images = [], wantsJson = true, validator = nul
   throw error;
 }
 
-function parseJson(text) {
-  let value = String(text || "").trim();
-  const fence = String.fromCharCode(96).repeat(3);
-  value = value.replace(new RegExp("^" + fence + "(?:json)?\\s*", "i"), "").replace(new RegExp("\\s*" + fence + "$"), "");
-  const first = value.indexOf("{");
-  const last = value.lastIndexOf("}");
-  if (first >= 0 && last > first) value = value.slice(first, last + 1);
-  try {
-    return JSON.parse(value);
-  } catch {
-    const error = new Error("Vexel received an invalid structured AI response. Nothing was graded. Please retry.");
-    error.status = 502;
-    error.code = "AI_INVALID_JSON";
-    throw error;
+function removeTrailingJsonCommas(value) {
+  let output = "";
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < value.length; index++) {
+    const char = value[index];
+    if (inString) {
+      output += char;
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      output += char;
+      continue;
+    }
+    if (char === ",") {
+      let next = index + 1;
+      while (next < value.length && /\s/.test(value[next])) next++;
+      if (value[next] === "}" || value[next] === "]") continue;
+    }
+    output += char;
   }
+  return output;
+}
+
+function balancedJsonValues(value) {
+  const found = [];
+  for (let start = 0; start < value.length; start++) {
+    if (value[start] !== "{" && value[start] !== "[") continue;
+    const stack = [];
+    let inString = false;
+    let escaped = false;
+    for (let index = start; index < value.length; index++) {
+      const char = value[index];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === "\\") escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+      if (char === '"') {
+        inString = true;
+        continue;
+      }
+      if (char === "{" || char === "[") stack.push(char);
+      else if (char === "}" || char === "]") {
+        const opening = stack.pop();
+        if ((char === "}" && opening !== "{") || (char === "]" && opening !== "[")) break;
+        if (stack.length === 0) {
+          found.push(value.slice(start, index + 1));
+          break;
+        }
+      }
+    }
+  }
+  return found.sort((a, b) => b.length - a.length);
+}
+
+function parseJson(text) {
+  let value = String(text || "").replace(/^\uFEFF/, "").trim();
+  const fence = String.fromCharCode(96).repeat(3);
+  value = value
+    .replace(new RegExp("^" + fence + "(?:json)?\\\\s*", "i"), "")
+    .replace(new RegExp("\\\\s*" + fence + "$"), "")
+    .trim();
+
+  const candidates = [value, ...balancedJsonValues(value)];
+  for (const candidate of [...new Set(candidates)]) {
+    for (const attempt of [candidate, removeTrailingJsonCommas(candidate)]) {
+      try {
+        return JSON.parse(attempt);
+      } catch {}
+    }
+  }
+
+  const error = new Error("Gemini returned malformed JSON after fallback attempts. Your answers are still saved; retry grading. If it repeats, the site owner should check the Gemini structured-output settings.");
+  error.status = 502;
+  error.code = "AI_INVALID_JSON";
+  error.retryable = true;
+  throw error;
 }
 
 function cleanText(value, maxLength = 6000) {
@@ -377,7 +579,13 @@ async function generateQuiz(body) {
     "User request: " + request
   ].filter(Boolean).join("\n");
 
-  const parsed = parseJson(await callGemini(prompt, [], true, (value) => isValidGeneratedQuizShape(value, count)));
+  const parsed = parseJson(await callGemini(
+    prompt,
+    [],
+    true,
+    (value) => isValidGeneratedQuizShape(value, count),
+    QUIZ_RESPONSE_SCHEMA
+  ));
   const rawQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
   if (rawQuestions.length !== count) {
     const error = new Error("Vexel could not generate the requested number of valid questions. Please retry or request fewer questions.");
@@ -508,7 +716,13 @@ async function extractImageQuestions(body) {
     "Keep up to 30 questions in page/question order. Use distinct IDs. If no reliable questions can be identified, return an empty questions array.",
     "User request: " + request
   ].join("\n");
-  const parsed = parseJson(await callGemini(prompt, images, true, (value) => Array.isArray(value?.questions) && value.questions.length <= MAX_QUESTIONS));
+  const parsed = parseJson(await callGemini(
+    prompt,
+    images,
+    true,
+    (value) => Array.isArray(value?.questions) && value.questions.length <= MAX_QUESTIONS,
+    QUESTION_EXTRACTION_SCHEMA
+  ));
   if (!Array.isArray(parsed.questions)) {
     const error = new Error("Vexel could not identify a valid question list in this image. Try a clearer, complete photo.");
     error.status = 502;
@@ -578,7 +792,13 @@ async function extractTextQuestions(body) {
     "Supplied question text:\n" + sourceText
   ].join("\n");
 
-  const parsed = parseJson(await callGemini(prompt, [], true, (value) => Array.isArray(value?.questions) && value.questions.length <= MAX_QUESTIONS));
+  const parsed = parseJson(await callGemini(
+    prompt,
+    [],
+    true,
+    (value) => Array.isArray(value?.questions) && value.questions.length <= MAX_QUESTIONS,
+    QUESTION_EXTRACTION_SCHEMA
+  ));
   if (!Array.isArray(parsed.questions)) {
     const error = new Error("Vexel could not identify a valid question list in the supplied text. Check the text and try again.");
     error.status = 502;
@@ -670,9 +890,13 @@ async function prepareImageQuiz(body) {
     "If the answer depends on an unreadable value, diagram, cropped instruction, or unknown information, set needsClarification=true rather than guessing. confidence must be from 0 to 1. Do not claim to know details that are not visible.",
     "Corrected question list: " + JSON.stringify(questions)
   ].join("\n");
-  const parsed = parseJson(await callGemini(prompt, images, true, (value) =>
-    Array.isArray(value?.solutions) && value.solutions.length === questions.length &&
-    questions.every((question) => value.solutions.some((solution) => String(solution?.id || "") === question.id))
+  const parsed = parseJson(await callGemini(
+    prompt,
+    images,
+    true,
+    (value) => Array.isArray(value?.solutions) && value.solutions.length === questions.length &&
+      questions.every((question) => value.solutions.some((solution) => String(solution?.id || "") === question.id)),
+    IMAGE_SOLUTIONS_SCHEMA
   ));
   const rawSolutions = Array.isArray(parsed.solutions) ? parsed.solutions : [];
   const byId = new Map(rawSolutions.map((solution) => [String(solution?.id || ""), solution]));
@@ -821,11 +1045,15 @@ async function gradeQuiz(body) {
       "Return JSON only: {\"results\":[{\"id\":string,\"marksAwarded\":number,\"explanation\":string,\"correctPoints\":[string],\"errors\":[string]}]}. Include every supplied ID exactly once. Marks must be numeric from 0 to maxMarks. Do not invent an official grading policy. Provide specific feedback on what is correct and what is missing.",
       "Items: " + JSON.stringify(openItems)
     ].join("\n");
-    const parsed = parseJson(await callGemini(prompt, [], true, (value) =>
-      Array.isArray(value?.results) && value.results.length === openItems.length &&
-      openItems.every((item) => value.results.some((result) =>
-        String(result?.id || "") === item.id && Number.isFinite(Number(result?.marksAwarded))
-      ))
+    const parsed = parseJson(await callGemini(
+      prompt,
+      [],
+      true,
+      (value) => Array.isArray(value?.results) && value.results.length === openItems.length &&
+        openItems.every((item) => value.results.some((result) =>
+          String(result?.id || "") === item.id && Number.isFinite(Number(result?.marksAwarded))
+        )),
+      EVALUATION_RESPONSE_SCHEMA
     ));
     if (!Array.isArray(parsed.results)) {
       const error = new Error("The evaluator returned an invalid result. Your answers are preserved; submit again to retry grading.");
