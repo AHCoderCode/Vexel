@@ -202,7 +202,15 @@ function makeSessionToken(session) {
   const key = crypto.createHash("sha256").update(secret).digest();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-  const plaintext = Buffer.from(JSON.stringify({ ...session, expiresAt: Date.now() + SESSION_TTL_MS }), "utf8");
+  const now = Date.now();
+  const deadlineAt = Number.isInteger(session.durationMinutes) && session.durationMinutes > 0
+    ? now + session.durationMinutes * 60 * 1000
+    : null;
+  const plaintext = Buffer.from(JSON.stringify({
+    ...session,
+    deadlineAt,
+    expiresAt: now + SESSION_TTL_MS
+  }), "utf8");
   const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
   return [iv.toString("base64url"), cipher.getAuthTag().toString("base64url"), encrypted.toString("base64url")].join(".");
 }
@@ -284,6 +292,7 @@ async function generateQuiz(body) {
     throw error;
   }
 
+  const questionFingerprints = new Set();
   const questions = rawQuestions.map((raw, index) => {
     const question = validQuestionText(raw);
     if (!Array.isArray(raw?.choices) || raw.choices.length !== 4) {
@@ -300,6 +309,15 @@ async function generateQuiz(body) {
       error.code = "INVALID_QUIZ_QUESTION";
       throw error;
     }
+    const fingerprint = question.normalize("NFKC").toLocaleLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    if (questionFingerprints.has(fingerprint)) {
+      const error = new Error("Vexel generated a duplicate question. The test was not started; please retry.");
+      error.status = 502;
+      error.code = "DUPLICATE_QUIZ_QUESTION";
+      throw error;
+    }
+    questionFingerprints.add(fingerprint);
     const rawAnswer = cleanText(raw.correctChoiceId ?? raw.answerId ?? raw.answer, 100);
     const answerLetter = rawAnswer.toUpperCase().replace(/^OPTION\s+/, "").trim();
     let answerIndex = choices.findIndex((choice) => choice.sourceId && choice.sourceId.toUpperCase() === answerLetter);
@@ -504,6 +522,12 @@ function normalizeAnswers(input) {
 
 async function gradeQuiz(body) {
   const session = readSessionToken(body.quizToken);
+  if (Number.isFinite(session.deadlineAt) && Date.now() > session.deadlineAt + 30000) {
+    const error = new Error("The test deadline passed before the submission reached Vexel. Your answers remain in this browser, but this timed session has expired. Start a new test to continue.");
+    error.status = 410;
+    error.code = "TEST_DEADLINE_EXPIRED";
+    throw error;
+  }
   const answers = normalizeAnswers(body.answers);
   const answerMap = new Map(answers.map((answer) => [answer.id, answer]));
   const results = [];
