@@ -250,6 +250,15 @@
   function isQuizIntent(text) {
     const value = String(text || "").trim();
     if (!value) return false;
+
+    const explicitAssessment = /\b(\d{1,3}\s*[- ]?\s*questions?|quiz|mcqs?|multiple[- ]choice|exam|examination|practice test|school test|test me|quiz me)\b/i.test(value);
+    const softwareTestRequest =
+      /\b(?:unit|integration|end[- ]to[- ]end|e2e|smoke|regression|automated|load|performance|security|api|component|snapshot)\s+tests?\b/i.test(value) ||
+      /\b(?:write|create|make|generate)\s+(?:a\s+)?tests?\s+(?:for|of)\s+(?:my|this|the)\s+(?:code|function|method|component|website|web app|app|api|endpoint)\b/i.test(value) ||
+      /\btest\s+(?:my|this|the)\s+(?:code|function|method|component|website|web app|app|api|endpoint)\b/i.test(value) ||
+      /\b(?:jest|vitest|pytest|mocha|junit|playwright|cypress)\b/i.test(value);
+    if (softwareTestRequest && !explicitAssessment) return false;
+
     if (/\b(what is|explain|define|meaning of)\b[\s\S]{0,40}\b(test|quiz|exam|mcq)\b/i.test(value)) return false;
     return /\b(create|make|generate|give me|start|take)\b[\s\S]{0,100}\b(test|quiz|mcq|exam|examination|questions?)\b/i.test(value) ||
       /\b(test me on|quiz me on|quiz me about|test me about|practice exam|practice test)\b/i.test(value) ||
