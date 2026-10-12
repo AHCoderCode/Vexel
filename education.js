@@ -21,6 +21,8 @@
   document.body.appendChild(picker);
 
   let requestSequence = 0;
+  let timerHandle = null;
+  let timerDeadline = null;
 
   const state = {
     mode: "",
@@ -60,6 +62,8 @@
   function closeEducation() {
     requestSequence++;
     stopRecognition();
+    stopQuizTimer();
+    timerDeadline = null;
     root.hidden = true;
     document.body.classList.remove("education-open");
     root.replaceChildren();
@@ -132,6 +136,54 @@
     return data;
   }
 
+  function requestedDurationMinutes(text) {
+    const match = String(text || "").match(/\b(\d{1,3})\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)\b/i);
+    if (!match) return 0;
+    const value = Number(match[1]);
+    if (!Number.isFinite(value) || value <= 0) return 0;
+    const unit = match[2].toLowerCase();
+    const minutes = unit.startsWith("hour") || unit.startsWith("hr") ? value * 60
+      : unit.startsWith("sec") ? Math.ceil(value / 60) : value;
+    return Math.min(180, Math.max(1, minutes));
+  }
+
+  function stopQuizTimer() {
+    if (timerHandle !== null) window.clearInterval(timerHandle);
+    timerHandle = null;
+  }
+
+  function updateQuizTimer() {
+    if (!timerDeadline || state.mode !== "active" || root.hidden) return;
+    const remaining = Math.max(0, timerDeadline - Date.now());
+    const label = root.querySelector("#edTimerLabel");
+    if (label) {
+      const seconds = Math.ceil(remaining / 1000);
+      const minutesPart = Math.floor(seconds / 60);
+      const secondsPart = seconds % 60;
+      label.textContent = "Time left " + String(minutesPart).padStart(2, "0") + ":" + String(secondsPart).padStart(2, "0");
+      label.classList.toggle("ed-timer-urgent", remaining <= 60000);
+    }
+    if (remaining <= 0 && !state.submitting) {
+      stopQuizTimer();
+      submitTest(true);
+    }
+  }
+
+  function startQuizTimer() {
+    const duration = Number(state.quiz && state.quiz.durationMinutes) || 0;
+    if (duration <= 0) return;
+    if (!timerDeadline) timerDeadline = Date.now() + duration * 60 * 1000;
+    updateQuizTimer();
+    if (timerHandle === null && state.mode === "active") {
+      timerHandle = window.setInterval(updateQuizTimer, 500);
+    }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) updateQuizTimer();
+  });
+  window.addEventListener("focus", updateQuizTimer);
+
   function countQuestions(text) {
     const match = String(text || "").match(/\b(\d{1,2})\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/i) ||
       String(text || "").match(/\b(?:create|make|generate)\s+(\d{1,2})\b/i);
@@ -172,7 +224,7 @@
       /\b(image|photo|picture|worksheet)\b[\s\S]{0,70}\b(questions?|quiz|test|solve|answer)\b/i.test(value);
   }
 
-  function renderTopicClarification(request, count, difficulty) {
+  function renderTopicClarification(request, count, difficulty, sourceText = "", durationMinutes = 0) {
     state.mode = "topic";
     state.originalRequest = request;
     const body = screen("Create an interactive test", "One detail is missing. Tell Vexel what subject or topic the test should cover.");
@@ -187,9 +239,11 @@
       }
       startGeneratedTest({
         request: request,
+        sourceText: sourceText,
         topic: topic,
         count: count,
         difficulty: difficulty,
+        durationMinutes: durationMinutes,
         level: "General"
       });
     });
@@ -258,6 +312,8 @@
 
   async function startGeneratedTest(spec) {
     const requestId = ++requestSequence;
+    stopQuizTimer();
+    timerDeadline = null;
     state.spec = spec;
     state.originalRequest = spec.request || "";
     state.isImage = false;
@@ -273,6 +329,7 @@
       state.index = 0;
       state.results = null;
       state.mode = "active";
+      timerDeadline = null;
       renderQuestion();
     } catch (error) {
       if (requestId !== requestSequence) return;
@@ -363,6 +420,8 @@
       return;
     }
     state.isImage = true;
+    stopQuizTimer();
+    timerDeadline = null;
     state.retryAction = () => startImageExtraction(state.images, state.originalRequest);
     showLoading("Reading your worksheet", "Vexel is extracting visible questions and answer choices. Unclear text will be flagged for review.");
     try {
@@ -700,7 +759,15 @@
     const body = screen(quiz.title || (state.isImage ? "Image Question Solver (Beta)" : "Your test"), (quiz.subject || "Practice questions") + " · " + (quiz.difficulty || "Source questions"));
     const topRow = el("div", "ed-row-between ed-progress-title");
     topRow.append(el("span", "", "Question " + (state.index + 1) + " of " + quiz.questions.length));
-    topRow.append(el("span", "ed-muted", question.marks + (question.marks === 1 ? " mark" : " marks")));
+    const topMeta = el("div", "ed-question-meta");
+    if (Number(quiz.durationMinutes) > 0) {
+      const timerLabel = el("span", "ed-timer-label");
+      timerLabel.id = "edTimerLabel";
+      timerLabel.setAttribute("aria-label", "Time remaining");
+      topMeta.append(timerLabel);
+    }
+    topMeta.append(el("span", "ed-muted", question.marks + (question.marks === 1 ? " mark" : " marks")));
+    topRow.append(topMeta);
     body.append(topRow);
     const progress = el("div", "ed-progress");
     const progressBar = el("div", "ed-progress-bar");
@@ -811,6 +878,7 @@
     navigatorPanel.append(navActions);
     body.append(navigatorPanel);
     body.append(el("p", "ed-privacy-note", "Answering by voice uses browser speech recognition when supported. Check the transcript before saving it. No feedback is revealed until submission."));
+    startQuizTimer();
   }
 
   function saveVisibleDraft(question, input) {
@@ -822,7 +890,7 @@
     }
   }
 
-  async function submitTest() {
+  async function submitTest(autoSubmit = false) {
     if (state.submitting || !state.quizToken) return;
     const requestId = ++requestSequence;
     const currentQuestion = state.quiz.questions[state.index];
@@ -857,14 +925,15 @@
       return question.type === "mcq" ? Boolean(answer?.choiceId) : Boolean(String(answer?.text || "").trim());
     }).length;
     const unanswered = state.quiz.questions.length - answered;
-    if (!window.confirm("Submit this test now? " + answered + " answered, " + unanswered + " unanswered. Answers cannot be changed after you see the results.")) return;
+    if (!autoSubmit && !window.confirm("Submit this test now? " + answered + " answered, " + unanswered + " unanswered. Answers cannot be changed after you see the results.")) return;
     state.submitting = true;
+    stopQuizTimer();
     const answers = state.quiz.questions.map((question) => ({
       id: question.id,
       choiceId: state.answers[question.id]?.choiceId || "",
       text: question.type === "mcq" ? (state.answers[question.id]?.typedDraft || "") : (state.answers[question.id]?.text || "")
     }));
-    showLoading("Marking your answers", "Vexel is calculating the score and preparing explanations. If evaluation fails, your answers remain available to retry.");
+    showLoading(autoSubmit ? "Time is up — submitting your answers" : "Marking your answers", autoSubmit ? "The deadline has passed. Vexel is submitting the answers available at the deadline." : "Vexel is calculating the score and preparing explanations. If evaluation fails, your answers remain available to retry.");
     try {
       const data = await api("grade", { quizToken: state.quizToken, answers: answers });
       if (requestId !== requestSequence) return;
@@ -946,6 +1015,8 @@
       state.index = 0;
       state.results = null;
       state.mode = "active";
+      stopQuizTimer();
+      timerDeadline = null;
       renderQuestion();
     }));
     actions.append(makeButton("New test", "ed-button ed-button-primary", () => {
@@ -1005,15 +1076,17 @@
         const topic = topicFromText(requestText);
         const count = countQuestions(requestText);
         const difficulty = difficultyFromText(requestText);
+        const durationMinutes = requestedDurationMinutes(requestText);
         const spec = {
           request: requestText,
           sourceText: sourceText,
           topic: topic,
           count: count,
           difficulty: difficulty,
+          durationMinutes: durationMinutes,
           level: /\bo level\b/i.test(requestText) ? "O Level" : "General"
         };
-        if (!topic || topic.length < 2) renderTopicClarification(text, count, difficulty);
+        if (!topic || topic.length < 2) renderTopicClarification(requestText, count, difficulty, sourceText, durationMinutes);
         else startGeneratedTest(spec);
         return;
       }
