@@ -265,6 +265,25 @@
       /\b(quiz me|test me)\b/i.test(value);
   }
 
+  function isQuestionSourceIntent(text) {
+    const value = String(text || "").trim();
+    if (value.length < 20) return false;
+
+    const transformIntent =
+      /\b(?:turn|convert|transform)\b[\s\S]{0,100}\b(?:into|to)\s+(?:a\s+)?(?:test|quiz|exam)\b/i.test(value) ||
+      /\b(?:create|make|generate|build)\s+(?:a\s+)?(?:test|quiz|exam)\s+(?:from|out of|using|based on)\s+(?:this|these|the following|my|provided|pasted|above|below)\b/i.test(value) ||
+      /\b(?:quiz|test)\s+me\s+on\s+(?:the following|these|my|pasted)\s+questions?\b/i.test(value) ||
+      /\buse\s+(?:the following|these|my|pasted)\s+questions?\b/i.test(value);
+
+    if (!transformIntent) return false;
+    const hasQuestionStructure =
+      /\?/.test(value) ||
+      /(?:^|\n)\s*(?:q(?:uestion)?\s*#?\s*\d+|\d+\s*[.)])\s*/im.test(value);
+    const colon = value.indexOf(":");
+    const hasTextAfterColon = colon >= 0 && value.slice(colon + 1).trim().length >= 8;
+    return hasQuestionStructure || hasTextAfterColon;
+  }
+
   function isImageQuestionIntent(text) {
     const value = String(text || "");
     return /\b(solve|answer|ask me|test me|quiz me|check my answers|extract|read|turn into a test|create|make|generate|quiz|test)\b[\s\S]{0,160}\b(question|worksheet|photo|image|picture|notebook|these|this|them|it|chapter|page|sheet|attached|uploaded)\b/i.test(value) ||
@@ -336,6 +355,49 @@
     panel.append(actions);
     body.append(panel);
     topicInput.focus();
+  }
+
+  function renderTextQuestionInput(initialText = "") {
+    state.mode = "text-input";
+    const body = screen("Turn your questions into a test", "Paste one or more questions below. Vexel will create an interactive test from your text, then mark your answers and explain the results.");
+    const form = el("form", "ed-panel");
+    const label = el("label", "ed-label", "Paste your question(s) and answer choices");
+    const textarea = el("textarea", "ed-field ed-answer-textarea");
+    textarea.rows = 9;
+    textarea.maxLength = 24000;
+    textarea.required = true;
+    textarea.placeholder = "Example:\n1. What is the main function of the heart?\nA. Digest food\nB. Pump blood\nC. Filter air\nD. Store energy\n\n2. Explain how plants make food.";
+    textarea.value = String(initialText || "");
+    textarea.setAttribute("aria-label", "Question text to turn into an interactive test");
+    form.append(label, textarea);
+    form.append(el("p", "ed-muted", "Include every answer choice for multiple-choice questions. Written questions can be typed or answered with voice. Check the extracted text before starting."));
+    const error = el("p", "ed-inline-error");
+    error.setAttribute("aria-live", "polite");
+    form.append(error);
+    const actions = el("div", "ed-actions");
+    actions.append(makeButton("Cancel", "ed-button ed-button-secondary", closeEducation));
+    const submit = el("button", "ed-button ed-button-primary", "Build my test");
+    submit.type = "submit";
+    actions.append(submit);
+    form.append(actions);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const value = textarea.value.trim();
+      if (value.length < 8) {
+        error.textContent = "Paste the full question wording before continuing.";
+        textarea.focus();
+        return;
+      }
+      startTextExtraction(value);
+    });
+    textarea.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    body.append(form);
+    textarea.focus();
   }
 
   function validateClientQuiz(quiz, token, expectedCount) {
@@ -546,10 +608,55 @@
     }
   }
 
+  async function startTextExtraction(sourceText) {
+    const text = String(sourceText || "").trim();
+    if (text.length < 8) {
+      showError("Add your question text", "Paste the full question wording and all answer choices before continuing.", renderTextQuestionInput);
+      return;
+    }
+    const requestId = ++requestSequence;
+    state.images = [];
+    state.originalRequest = text.slice(0, 24000);
+    state.isImage = false;
+    state.retryAction = () => startTextExtraction(text);
+    stopQuizTimer();
+    timerDeadline = null;
+    showLoading("Reading your questions", "Vexel is separating the supplied questions and answer choices. Please check the extracted text before marking begins.");
+    try {
+      const data = await api("extract-text", { sourceText: state.originalRequest });
+      if (requestId !== requestSequence) return;
+      if (!Array.isArray(data.questions) || !data.questions.length) {
+        throw new Error("No questions were identified. Paste the complete question(s), including all choices for multiple-choice items.");
+      }
+      state.extractedQuestions = data.questions.map((question, index) => ({
+        id: String(question.id || ("txtq" + (index + 1))),
+        type: question.type === "mcq" ? "mcq" : "short",
+        question: String(question.question || ""),
+        choices: Array.isArray(question.choices) ? question.choices.map((choice, choiceIndex) => ({
+          id: String.fromCharCode(65 + choiceIndex),
+          text: String(choice.text || "")
+        })) : [],
+        marks: Math.min(20, Math.max(1, Number(question.marks) || 1)),
+        needsClarification: Boolean(question.needsClarification),
+        clarification: String(question.clarification || "")
+      }));
+      state.mode = "review";
+      renderImageReview();
+    } catch (error) {
+      if (requestId !== requestSequence) return;
+      showError("Couldn't read these questions", error.message, () => startTextExtraction(text));
+    }
+  }
+
   function renderImageReview() {
     state.mode = "review";
-    const body = screen("Review extracted questions", "Beta feature: check the transcription against your image before Vexel prepares the marking key. Uncertain text must be corrected before continuing.");
-    const note = el("div", "ed-note", "Vexel does not save this exercise as chat history. Images are sent to Gemini for processing, so avoid uploading private information. Check numbers, signs, units, and option order carefully.");
+    const fromImages = state.images.length > 0;
+    const body = screen("Review extracted questions", fromImages
+      ? "Check the transcription against your image before Vexel prepares the marking key. Uncertain text must be corrected before continuing."
+      : "Check the extracted wording and options before Vexel prepares the marking key.");
+    const note = el("div", "ed-note", fromImages
+      ? "Vexel does not save this exercise as chat history. Images are sent to Gemini for processing, so avoid uploading private information. Check numbers, signs, units, and option order carefully."
+      : "Vexel uses the question text you provided to prepare reference answers and explanations. Check the transcription and options carefully before continuing.");
     body.append(note);
     const imageRow = el("div", "ed-image-row");
     state.images.forEach((image, index) => {
@@ -574,16 +681,18 @@
       figure.append(pageActions);
       imageRow.append(figure);
     });
-    body.append(imageRow);
-    const imageActions = el("div", "ed-inline-actions");
-    if (state.images.length < MAX_IMAGE_FILES) {
-      imageActions.append(makeButton("Add another page", "ed-button ed-button-secondary", () => choosePageAction("add")));
+    if (fromImages) {
+      body.append(imageRow);
+      const imageActions = el("div", "ed-inline-actions");
+      if (state.images.length < MAX_IMAGE_FILES) {
+        imageActions.append(makeButton("Add another page", "ed-button ed-button-secondary", () => choosePageAction("add")));
+      }
+      imageActions.append(makeButton("Replace all images", "ed-button ed-button-secondary", () => {
+        if (!window.confirm("Replace the current worksheet pages? Any manual text corrections on this screen will reset.")) return;
+        startImageInput();
+      }));
+      body.append(imageActions);
     }
-    imageActions.append(makeButton("Replace all images", "ed-button ed-button-secondary", () => {
-      if (!window.confirm("Replace the current worksheet pages? Any manual text corrections on this screen will reset.")) return;
-      startImageInput();
-    }));
-    body.append(imageActions);
 
     state.extractedQuestions.forEach((question, index) => {
       const card = el("section", "ed-panel ed-review-card");
@@ -733,7 +842,7 @@
       state.index = 0;
       state.results = null;
       state.mode = "active";
-      state.isImage = true;
+      state.isImage = state.images.length > 0;
       renderQuestion();
     } catch (error) {
       if (requestId !== requestSequence) return;
@@ -1201,13 +1310,21 @@
       const prompt = document.getElementById("promptInput");
       const text = prompt ? prompt.value.trim() : "";
       const images = composerImages();
-      if (images.length && isImageQuestionIntent(text)) {
+      if (images.length && (!text || isImageQuestionIntent(text) || isQuizIntent(text))) {
         clearComposerImages();
         if (prompt) {
           prompt.value = "";
           prompt.style.height = "44px";
         }
-        startImageExtraction(images, text);
+        startImageExtraction(images, text || "Extract these worksheet questions so I can answer them directly.");
+        return;
+      }
+      if (images.length === 0 && isQuestionSourceIntent(text)) {
+        if (prompt) {
+          prompt.value = "";
+          prompt.style.height = "44px";
+        }
+        startTextExtraction(text);
         return;
       }
       if (isQuizIntent(text) && images.length === 0) {
@@ -1264,6 +1381,16 @@
       renderTopicClarification("", 10, "Medium");
     });
     plusMenu.append(quizItem);
+    const textItem = el("button", "plus-menu-item");
+    textItem.type = "button";
+    textItem.setAttribute("role", "menuitem");
+    textItem.append(el("span", "icon", "✎"));
+    textItem.append(el("span", "", "Turn my questions into a test"));
+    textItem.addEventListener("click", () => {
+      if (typeof window.togglePlusMenu === "function") window.togglePlusMenu(false);
+      renderTextQuestionInput();
+    });
+    plusMenu.append(textItem);
   }
 
   console.info("[Vexel education] Interactive test and beta image solver loaded.");
