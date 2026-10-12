@@ -1150,8 +1150,8 @@
 })();
 
 
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !root.hidden) {
-    closeEducation();
-  }
-}, true);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !root.hidden) {
+      closeEducation();
+    }
+  }, true);
