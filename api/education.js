@@ -70,10 +70,10 @@ async function callGemini(prompt, images = [], wantsJson = true) {
     throw error;
   }
 
-  const models = [...new Set([
-    process.env.GEMINI_MODEL || "gemini-3.6-flash",
-    process.env.GEMINI_FALLBACK_MODEL || "gemini-3.8-flash"
-  ])];
+  const primaryModel = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const fallbackModel = process.env.GEMINI_FALLBACK_MODEL ||
+    (primaryModel === "gemini-3.8-flash" ? "gemini-3.6-flash" : "gemini-3.8-flash");
+  const models = [...new Set([primaryModel, fallbackModel])];
   let lastError = null;
 
   for (let index = 0; index < models.length; index++) {
@@ -128,11 +128,20 @@ async function callGemini(prompt, images = [], wantsJson = true) {
     const details = data?.error || {};
     const detail = String(details.message || "").toLowerCase();
     const quota = /billing|daily quota|per day|monthly quota|quota exceeded|exceeded your current quota|limit: 0/.test(detail);
-    if (quota || response.status === 429) {
-      const error = new Error("Vexel has reached the AI provider's current quota or rate limit. This is not a problem with your answers. Please try again later.");
+    if (quota) {
+      const error = new Error("Vexel has reached the AI provider's usage quota. This is not a problem with your answers. Please try again after the provider quota resets or the site owner reviews quota settings.");
       error.status = 429;
-      error.code = quota ? "AI_QUOTA_EXHAUSTED" : "AI_RATE_LIMITED";
-      error.retryable = !quota;
+      error.code = "AI_QUOTA_EXHAUSTED";
+      error.retryable = false;
+      throw error;
+    }
+    if (response.status === 429) {
+      lastError = new Error("The selected Gemini model is rate-limited.");
+      if (index < models.length - 1) continue;
+      const error = new Error("Vexel is being rate-limited by the AI provider. Your answers are preserved; wait a little and retry.");
+      error.status = 429;
+      error.code = "AI_RATE_LIMITED";
+      error.retryable = true;
       throw error;
     }
 
