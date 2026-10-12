@@ -10,6 +10,7 @@
   root.hidden = true;
   root.setAttribute("aria-live", "polite");
   document.body.appendChild(root);
+  const appShell = document.querySelector(".app-shell");
 
   const picker = document.createElement("input");
   picker.type = "file";
@@ -57,6 +58,10 @@
   function showRoot() {
     root.hidden = false;
     document.body.classList.add("education-open");
+    if (appShell) {
+      appShell.setAttribute("inert", "");
+      appShell.setAttribute("aria-hidden", "true");
+    }
   }
 
   function closeEducation() {
@@ -66,6 +71,10 @@
     timerDeadline = null;
     root.hidden = true;
     document.body.classList.remove("education-open");
+    if (appShell) {
+      appShell.removeAttribute("inert");
+      appShell.removeAttribute("aria-hidden");
+    }
     root.replaceChildren();
     picker.value = "";
     state.mode = "";
@@ -200,7 +209,7 @@
 
   function topicFromText(text) {
     return String(text || "")
-      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|a|an|the|this|these|on|about|for|please|me|with|and|of|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|chapter|notes?|document|file|material|worksheet|uploaded|attached|15-question)\b/gi, " ")
+      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|a|an|the|this|these|on|about|for|please|me|with|and|of|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|chapter|notes?|document|file|pdf|content|study|material|worksheet|uploaded|attached|in|from|15-question)\b/gi, " ")
       .replace(/\b\d+\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/gi, " ")
       .replace(/\b\d+\b/g, " ")
       .replace(/\s+/g, " ")
@@ -490,7 +499,15 @@
       const text = el("textarea", "ed-field ed-question-editor");
       text.value = question.question;
       text.rows = 3;
-      text.addEventListener("input", () => { question.question = text.value; });
+      text.addEventListener("input", () => {
+        question.question = text.value;
+        if (question.needsClarification) {
+          question.needsClarification = false;
+          question.clarification = "";
+          const warning = card.querySelector(".ed-note-error");
+          if (warning) warning.remove();
+        }
+      });
       card.append(text);
       const metaRow = el("div", "ed-meta-grid");
       const typeWrap = el("div", "");
@@ -565,6 +582,15 @@
 
   async function startImageSolving() {
     const requestId = ++requestSequence;
+    const unresolved = state.extractedQuestions.find((question) => question.needsClarification);
+    if (unresolved) {
+      showError(
+        "Review unclear source text",
+        "Question " + (state.extractedQuestions.indexOf(unresolved) + 1) + " was flagged as unreadable. Correct its question text in the review screen before starting so Vexel does not guess at missing content.",
+        renderImageReview
+      );
+      return;
+    }
     for (const question of state.extractedQuestions) {
       question.question = String(question.question || "").trim();
       question.choices = (question.choices || []).map((choice, index) => ({
@@ -1122,3 +1148,10 @@
 
   console.info("[Vexel education] Interactive test and beta image solver loaded.");
 })();
+
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !root.hidden) {
+    closeEducation();
+  }
+}, true);
