@@ -183,7 +183,7 @@
     if (duration <= 0) return;
     if (!timerDeadline) timerDeadline = Date.now() + duration * 60 * 1000;
     updateQuizTimer();
-    if (timerHandle === null && state.mode === "active") {
+    if (timerHandle === null && state.mode === "active" && !state.submitting && timerDeadline > Date.now()) {
       timerHandle = window.setInterval(updateQuizTimer, 500);
     }
   }
@@ -979,6 +979,7 @@
   }
 
   function renderResults() {
+    stopQuizTimer();
     state.mode = "results";
     const result = state.results;
     const body = screen("Your results", "Review your marks and use the explanations to decide what to revise next.");
