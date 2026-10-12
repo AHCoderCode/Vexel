@@ -61,7 +61,7 @@ function contentParts(prompt, images) {
   return parts;
 }
 
-async function callGemini(prompt, images = [], wantsJson = true) {
+async function callGemini(prompt, images = [], wantsJson = true, validator = null) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     const error = new Error("Vexel's AI service is not configured. The site owner needs to check GEMINI_API_KEY in Vercel.");
@@ -73,7 +73,9 @@ async function callGemini(prompt, images = [], wantsJson = true) {
   const primaryModel = process.env.GEMINI_MODEL || "gemini-3.8-flash";
   const fallbackModel = process.env.GEMINI_FALLBACK_MODEL ||
     (primaryModel === "gemini-3.8-flash" ? "gemini-3.6-flash" : "gemini-3.8-flash");
-  const models = [...new Set([primaryModel, fallbackModel])];
+  const lowCostModel = process.env.GEMINI_LOW_COST_MODEL || "gemini-3.5-flash-lite";
+  // Try a third supported model for model-specific quota, schema, or availability failures.
+  const models = [...new Set([primaryModel, fallbackModel, lowCostModel].filter(Boolean))];
   let lastError = null;
 
   for (let index = 0; index < models.length; index++) {
@@ -91,7 +93,7 @@ async function callGemini(prompt, images = [], wantsJson = true) {
             signal: controller.signal,
             body: JSON.stringify({
               contents: [{ role: "user", parts: contentParts(prompt, images) }],
-              ...(wantsJson ? { generationConfig: { responseMimeType: "application/json", temperature: 0.2 } } : {})
+              ...(wantsJson ? { generationConfig: { responseMimeType: "application/json", temperature: 0.2, maxOutputTokens: 16384 } } : {})
             })
           }
         );
@@ -101,35 +103,66 @@ async function callGemini(prompt, images = [], wantsJson = true) {
     } catch (error) {
       lastError = error;
       if (error?.name === "AbortError") {
-        const timeoutError = new Error("The AI provider took too long to respond. Your work has not been graded; please retry.");
+        // A single fallback attempt is allowed after a timeout, keeping the request within Vercel's execution budget.
+        if (index === 0 && index < models.length - 1) continue;
+        const timeoutError = new Error("The AI provider timed out. Please retry. If it happens repeatedly, reduce the question count or check provider status.");
         timeoutError.status = 504;
         timeoutError.code = "AI_TIMEOUT";
+        timeoutError.retryable = true;
         throw timeoutError;
       }
       if (index < models.length - 1) continue;
       const networkError = new Error("Vexel could not reach the AI provider. Check your connection and retry.");
       networkError.status = 503;
       networkError.code = "AI_NETWORK_ERROR";
+      networkError.retryable = true;
       throw networkError;
     }
 
     const data = await response.json().catch(() => ({}));
     if (response.ok) {
-      const text = data?.candidates?.[0]?.content?.parts?.map((part) => typeof part.text === "string" ? part.text : "").join("").trim();
-      if (!text) {
-        const error = new Error("The AI provider returned an empty response. Your work has been preserved; please retry.");
+      const candidate = data?.candidates?.[0];
+      const text = candidate?.content?.parts?.map((part) => typeof part.text === "string" ? part.text : "").join("").trim();
+      const truncated = String(candidate?.finishReason || "").toUpperCase() === "MAX_TOKENS";
+      if (!text || truncated) {
+        const error = new Error(truncated
+          ? "The AI response was cut off before the JSON was complete."
+          : "The AI provider returned an empty response.");
         error.status = 502;
-        error.code = "AI_EMPTY_RESPONSE";
+        error.code = truncated ? "AI_OUTPUT_TRUNCATED" : "AI_EMPTY_RESPONSE";
+        lastError = error;
+        if (index < models.length - 1) continue;
         throw error;
+      }
+      if (wantsJson) {
+        try {
+          const parsed = parseJson(text);
+          if (typeof validator === "function" && !validator(parsed)) {
+            const shapeError = new Error("The AI response did not match the required quiz data structure.");
+            shapeError.status = 502;
+            shapeError.code = "AI_INVALID_RESPONSE_SHAPE";
+            throw shapeError;
+          }
+        } catch (error) {
+          lastError = error;
+          if (index < models.length - 1) continue;
+          throw error;
+        }
       }
       return text;
     }
 
     const details = data?.error || {};
     const detail = String(details.message || "").toLowerCase();
-    const quota = /billing|daily quota|per day|monthly quota|quota exceeded|exceeded your current quota|limit: 0/.test(detail);
+    const quota = /billing|daily quota|per day|monthly quota|quota exceeded|exceeded your current quota|limit:\s*0/.test(detail);
+    const modelSpecificQuota =
+      /model\s*[:=]|per[_ ]model|model[- ]specific|model.{0,80}(?:quota|limit)|(?:quota|limit).{0,80}model|limit:\s*0|generate_content_free_tier_requests/.test(detail);
+    if (quota && modelSpecificQuota && index < models.length - 1) {
+      lastError = new Error("The configured Gemini model has no remaining quota; trying a fallback model.");
+      continue;
+    }
     if (quota) {
-      const error = new Error("Vexel has reached the AI provider's usage quota. This is not a problem with your answers. Please try again after the provider quota resets or the site owner reviews quota settings.");
+      const error = new Error("Vexel could not get a response because the Gemini API quota or billing limit has been reached for the available models. Check the Gemini API quota and billing settings for the key used in Vercel; code cannot override a provider-wide limit.");
       error.status = 429;
       error.code = "AI_QUOTA_EXHAUSTED";
       error.retryable = false;
@@ -146,8 +179,9 @@ async function callGemini(prompt, images = [], wantsJson = true) {
     }
 
     const invalidModel = response.status === 400 && /model|not found|not supported|does not exist/.test(detail);
-    if (invalidModel && index < models.length - 1) {
-      lastError = new Error(details.message || "Configured model unavailable.");
+    const transientProviderFailure = response.status === 408 || response.status === 425 || response.status >= 500;
+    if ((invalidModel || transientProviderFailure) && index < models.length - 1) {
+      lastError = new Error(details.message || (invalidModel ? "Configured model unavailable." : "Gemini provider temporarily unavailable."));
       continue;
     }
 
@@ -156,6 +190,7 @@ async function callGemini(prompt, images = [], wantsJson = true) {
       : "Vexel could not complete the AI request. Please try again.");
     error.status = response.status >= 400 && response.status < 500 ? response.status : 502;
     error.code = response.status === 401 || response.status === 403 ? "AI_AUTH_ERROR" : "AI_REQUEST_FAILED";
+    error.retryable = transientProviderFailure;
     throw error;
   }
 
@@ -266,6 +301,43 @@ function safeQuestion(question) {
   };
 }
 
+function isValidGeneratedQuizShape(parsed, expectedCount) {
+  if (!parsed || !Array.isArray(parsed.questions) || parsed.questions.length !== expectedCount) return false;
+  const seen = new Set();
+
+  for (const raw of parsed.questions) {
+    const question = validQuestionText(raw);
+    if (!question) return false;
+    const fingerprint = question.normalize("NFKC").toLocaleLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    if (seen.has(fingerprint)) return false;
+    seen.add(fingerprint);
+
+    const rawType = cleanText(raw?.type, 30).toLowerCase();
+    const rawChoices = Array.isArray(raw?.choices) ? raw.choices : [];
+    const type = rawType === "long" ? "long"
+      : rawType === "short" ? "short"
+      : rawType === "mcq" || rawChoices.length >= 2 ? "mcq" : "short";
+
+    if (type === "mcq") {
+      if (rawChoices.length !== 4) return false;
+      const choices = normalizeChoices(rawChoices, 4);
+      if (choices.some((choice) => !choice.text) ||
+          new Set(choices.map((choice) => choice.text.toLocaleLowerCase())).size !== 4) return false;
+
+      const rawAnswer = cleanText(raw.correctChoiceId ?? raw.answerId ?? raw.answer, 100);
+      const answerLetter = rawAnswer.toUpperCase().replace(/^OPTION\s+/, "").trim();
+      let answerIndex = choices.findIndex((choice) => choice.sourceId && choice.sourceId.toUpperCase() === answerLetter);
+      if (answerIndex < 0) answerIndex = choices.findIndex((choice) => choice.id === answerLetter);
+      if (answerIndex < 0) answerIndex = choices.findIndex((choice) => choice.text.toLocaleLowerCase() === rawAnswer.toLocaleLowerCase());
+      if (answerIndex < 0) return false;
+    } else if (!cleanText(raw.referenceAnswer ?? raw.correctAnswer ?? raw.answer, 6000)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 async function generateQuiz(body) {
   const request = cleanText(body.request, 2000);
   const sourceText = cleanText(body.sourceText, 12000);
@@ -305,7 +377,7 @@ async function generateQuiz(body) {
     "User request: " + request
   ].filter(Boolean).join("\n");
 
-  const parsed = parseJson(await callGemini(prompt));
+  const parsed = parseJson(await callGemini(prompt, [], true, (value) => isValidGeneratedQuizShape(value, count)));
   const rawQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
   if (rawQuestions.length !== count) {
     const error = new Error("Vexel could not generate the requested number of valid questions. Please retry or request fewer questions.");
@@ -436,7 +508,7 @@ async function extractImageQuestions(body) {
     "Keep up to 30 questions in page/question order. Use distinct IDs. If no reliable questions can be identified, return an empty questions array.",
     "User request: " + request
   ].join("\n");
-  const parsed = parseJson(await callGemini(prompt, images));
+  const parsed = parseJson(await callGemini(prompt, images, true, (value) => Array.isArray(value?.questions) && value.questions.length <= MAX_QUESTIONS));
   if (!Array.isArray(parsed.questions)) {
     const error = new Error("Vexel could not identify a valid question list in this image. Try a clearer, complete photo.");
     error.status = 502;
@@ -506,7 +578,7 @@ async function extractTextQuestions(body) {
     "Supplied question text:\n" + sourceText
   ].join("\n");
 
-  const parsed = parseJson(await callGemini(prompt));
+  const parsed = parseJson(await callGemini(prompt, [], true, (value) => Array.isArray(value?.questions) && value.questions.length <= MAX_QUESTIONS));
   if (!Array.isArray(parsed.questions)) {
     const error = new Error("Vexel could not identify a valid question list in the supplied text. Check the text and try again.");
     error.status = 502;
@@ -598,7 +670,10 @@ async function prepareImageQuiz(body) {
     "If the answer depends on an unreadable value, diagram, cropped instruction, or unknown information, set needsClarification=true rather than guessing. confidence must be from 0 to 1. Do not claim to know details that are not visible.",
     "Corrected question list: " + JSON.stringify(questions)
   ].join("\n");
-  const parsed = parseJson(await callGemini(prompt, images));
+  const parsed = parseJson(await callGemini(prompt, images, true, (value) =>
+    Array.isArray(value?.solutions) && value.solutions.length === questions.length &&
+    questions.every((question) => value.solutions.some((solution) => String(solution?.id || "") === question.id))
+  ));
   const rawSolutions = Array.isArray(parsed.solutions) ? parsed.solutions : [];
   const byId = new Map(rawSolutions.map((solution) => [String(solution?.id || ""), solution]));
   const complete = questions.map((question) => {
@@ -746,7 +821,12 @@ async function gradeQuiz(body) {
       "Return JSON only: {\"results\":[{\"id\":string,\"marksAwarded\":number,\"explanation\":string,\"correctPoints\":[string],\"errors\":[string]}]}. Include every supplied ID exactly once. Marks must be numeric from 0 to maxMarks. Do not invent an official grading policy. Provide specific feedback on what is correct and what is missing.",
       "Items: " + JSON.stringify(openItems)
     ].join("\n");
-    const parsed = parseJson(await callGemini(prompt));
+    const parsed = parseJson(await callGemini(prompt, [], true, (value) =>
+      Array.isArray(value?.results) && value.results.length === openItems.length &&
+      openItems.every((item) => value.results.some((result) =>
+        String(result?.id || "") === item.id && Number.isFinite(Number(result?.marksAwarded))
+      ))
+    ));
     if (!Array.isArray(parsed.results)) {
       const error = new Error("The evaluator returned an invalid result. Your answers are preserved; submit again to retry grading.");
       error.status = 502;
