@@ -200,7 +200,7 @@
 
   function topicFromText(text) {
     return String(text || "")
-      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|a|an|the|on|about|for|please|me|with|of|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|15-question)\b/gi, " ")
+      .replace(/\b(create|make|generate|give me|start|take|test me|quiz me|quiz|test|mcq|multiple choice|exam|examination|practice|questions?|a|an|the|this|these|on|about|for|please|me|with|and|of|difficult|hard|easy|medium|moderate|beginner|advanced|expert|very|extremely|difficulty|chapter|notes?|document|file|material|worksheet|uploaded|attached|15-question)\b/gi, " ")
       .replace(/\b\d+\s*[- ]?\s*(?:questions?|mcqs?|items?)\b/gi, " ")
       .replace(/\b\d+\b/g, " ")
       .replace(/\s+/g, " ")
@@ -1073,7 +1073,8 @@
         const pdfMarker = text.indexOf("[PDF Content]:");
         const requestText = pdfMarker >= 0 ? text.slice(0, pdfMarker).trim() : text;
         const sourceText = pdfMarker >= 0 ? text.slice(pdfMarker + "[PDF Content]:".length).trim().slice(0, 12000) : "";
-        const topic = topicFromText(requestText);
+        let topic = topicFromText(requestText);
+        if ((!topic || topic.length < 2) && sourceText) topic = "Uploaded study material";
         const count = countQuestions(requestText);
         const difficulty = difficultyFromText(requestText);
         const durationMinutes = requestedDurationMinutes(requestText);
