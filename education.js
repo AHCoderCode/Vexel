@@ -242,10 +242,14 @@
     }
     const ids = new Set();
     for (const question of quiz.questions) {
+      const isMcq = question && question.type === "mcq";
+      const validChoices = Array.isArray(question?.choices) &&
+        (isMcq
+          ? question.choices.length >= 2 && question.choices.every((choice) => choice && choice.id && typeof choice.text === "string" && choice.text.trim())
+          : question.type === "short" && question.choices.length === 0);
       if (!question || typeof question.id !== "string" || ids.has(question.id) ||
-          typeof question.question !== "string" || !question.question.trim() ||
-          !Array.isArray(question.choices) || question.choices.length < 2 ||
-          question.choices.some((choice) => !choice || !choice.id || !choice.text)) {
+          typeof question.question !== "string" || !question.question.trim() || !validChoices ||
+          !Number.isFinite(Number(question.marks)) || Number(question.marks) <= 0) {
         throw new Error("Vexel returned a malformed question. No examination was started; please retry.");
       }
       ids.add(question.id);
@@ -995,10 +999,20 @@
           prompt.value = "";
           prompt.style.height = "44px";
         }
-        const topic = topicFromText(text);
-        const count = countQuestions(text);
-        const difficulty = difficultyFromText(text);
-        const spec = { request: text, topic: topic, count: count, difficulty: difficulty, level: /\bo level\b/i.test(text) ? "O Level" : "General" };
+        const pdfMarker = text.indexOf("[PDF Content]:");
+        const requestText = pdfMarker >= 0 ? text.slice(0, pdfMarker).trim() : text;
+        const sourceText = pdfMarker >= 0 ? text.slice(pdfMarker + "[PDF Content]:".length).trim().slice(0, 12000) : "";
+        const topic = topicFromText(requestText);
+        const count = countQuestions(requestText);
+        const difficulty = difficultyFromText(requestText);
+        const spec = {
+          request: requestText,
+          sourceText: sourceText,
+          topic: topic,
+          count: count,
+          difficulty: difficulty,
+          level: /\bo level\b/i.test(requestText) ? "O Level" : "General"
+        };
         if (!topic || topic.length < 2) renderTopicClarification(text, count, difficulty);
         else startGeneratedTest(spec);
         return;
